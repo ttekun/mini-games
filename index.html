@@ -178,6 +178,48 @@
       animation-delay: 0.4s;
     }
 
+    /* Tetris block icon — T-tetromino shape */
+    .tetris-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      margin: 0 auto 14px;
+      width: fit-content;
+      animation: iconBob 2.5s ease-in-out infinite alternate;
+    }
+
+    .tetris-icon .t-row {
+      display: flex;
+      gap: 3px;
+    }
+
+    .tetris-icon .blk {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    /* Glossy highlight on each block */
+    .tetris-icon .blk::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 6px;
+      height: 4px;
+      background: rgba(255,255,255,0.45);
+      border-radius: 2px;
+    }
+
+    .blk.c1 { background: var(--pop-sky);    box-shadow: 0 0 8px rgba(56,217,245,0.7); }
+    .blk.c2 { background: var(--pop-pink);   box-shadow: 0 0 8px rgba(255,110,180,0.7); }
+    .blk.c3 { background: var(--pop-yellow); box-shadow: 0 0 8px rgba(255,228,77,0.7); }
+    .blk.c4 { background: var(--pop-mint);   box-shadow: 0 0 8px rgba(77,255,195,0.7); }
+    .blk.c5 { background: var(--pop-purple); box-shadow: 0 0 8px rgba(199,125,255,0.7); }
+    .blk.empty { background: transparent; box-shadow: none; }
+
     .card-title {
       font-family: var(--font-main);
       font-size: 1.3rem;
@@ -254,7 +296,21 @@
     <div class="game-grid">
       <a href="games/tetris/index.html" class="game-card tetris">
         <div class="card-content">
-          <span class="card-icon">🧩</span>
+          <!-- Tetris blocks: stacked T + S + I pieces (4 cols wide) -->
+          <div class="tetris-icon">
+            <div class="t-row">
+              <div class="blk empty"></div><div class="blk c1"></div><div class="blk c1"></div><div class="blk c1"></div>
+            </div>
+            <div class="t-row">
+              <div class="blk empty"></div><div class="blk empty"></div><div class="blk c1"></div><div class="blk empty"></div>
+            </div>
+            <div class="t-row">
+              <div class="blk empty"></div><div class="blk c3"></div><div class="blk c3"></div><div class="blk empty"></div>
+            </div>
+            <div class="t-row">
+              <div class="blk c2"></div><div class="blk c3"></div><div class="blk c4"></div><div class="blk c4"></div>
+            </div>
+          </div>
           <div class="card-title">テトリス</div>
           <div class="card-desc">ブロックパズル</div>
           <div class="card-badge">小学生1〜4</div>
