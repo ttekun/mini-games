@@ -223,8 +223,8 @@
             }
         }
         
-        .demo-overlay {
-            position: absolute;
+        .start-screen {
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
@@ -233,40 +233,87 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: 50;
-            pointer-events: none;
-            animation: demoPulse 2s ease-in-out infinite;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
         }
         
-        .demo-overlay.hidden {
+        .start-screen.hidden {
             display: none;
         }
         
-        .demo-label {
+        .start-screen .demo-badge {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #00ffe7;
+            border: 1px solid #00ffe7;
+            padding: 4px 14px;
+            margin-bottom: 16px;
+            text-shadow: 0 0 8px rgba(0, 255, 231, 0.8);
+            box-shadow: 0 0 12px rgba(0, 255, 231, 0.3);
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        
+        .start-screen h1 {
             font-size: 2.5rem;
             font-weight: 900;
-            letter-spacing: 12px;
-            color: #00ffe7;
-            text-shadow: 0 0 20px rgba(0, 255, 231, 0.8), 0 0 40px rgba(0, 255, 231, 0.4);
+            letter-spacing: 8px;
+            color: #63b3ed;
+            text-shadow: 0 0 20px rgba(99, 179, 237, 0.6), 0 0 40px rgba(99, 179, 237, 0.3);
+            margin-bottom: 8px;
         }
         
-        .demo-hint {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 12px;
+        .start-screen .subtitle {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.7rem;
+            color: rgba(99, 179, 237, 0.5);
+            letter-spacing: 3px;
+            margin-bottom: 24px;
+        }
+        
+        .start-screen .start-game-btn {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 14px 48px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(66, 153, 225, 0.4);
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin-bottom: 12px;
+        }
+        
+        .start-screen .start-game-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(66, 153, 225, 0.4);
+        }
+        
+        .start-screen .home-link {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
             letter-spacing: 2px;
-            animation: blink 1.5s ease-in-out infinite;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+            transition: all 0.1s;
         }
         
-        @keyframes demoPulse {
-            0%, 100% { background: rgba(0, 0, 0, 0.4); }
-            50% { background: rgba(0, 0, 0, 0.25); }
+        .start-screen .home-link:active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
         }
         
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        @keyframes badgePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(0, 255, 231, 0.3); }
+            50% { opacity: 0.6; box-shadow: 0 0 6px rgba(0, 255, 231, 0.15); }
         }
 
         .game-over {
@@ -351,10 +398,6 @@
         <!-- 게임 캔버스 -->
         <div class="game-area">
             <canvas id="board" width="300" height="600"></canvas>
-            <div class="demo-overlay" id="demoOverlay">
-                <div class="demo-label">DEMO</div>
-                <div class="demo-hint">タップして開始</div>
-            </div>
             <div class="game-over" id="gameOver">
                 <h2>ゲームオーバー</h2>
                 <p>スコア: <span id="finalScore">0</span></p>
@@ -380,6 +423,15 @@
     
     <div class="pc-hint">
         キーボード: ← → 移動 | ↑ 回転 | ↓ ソフトドロップ | Space ハードドロップ | P 一時停止
+    </div>
+
+    <!-- 全画面スタート画面 (デモの上に表示) -->
+    <div class="start-screen" id="startScreen">
+        <div class="demo-badge">DEMO PLAY</div>
+        <h1>テトリス</h1>
+        <div class="subtitle">// CLASSIC BLOCK PUZZLE //</div>
+        <button class="start-game-btn" id="startGameBtn">START</button>
+        <button class="home-link" id="homeBtnScreen">HOME</button>
     </div>
 
     <script>
@@ -878,8 +930,8 @@
                 // If in demo mode, stop demo and start real game
                 if (this.isDemo) {
                     this.stopDemo();
-                    const overlay = document.getElementById('demoOverlay');
-                    if (overlay) overlay.classList.add('hidden');
+                    const screen = document.getElementById('startScreen');
+                    if (screen) screen.classList.add('hidden');
                     this.restart();
                     return;
                 }
@@ -1048,9 +1100,22 @@
         // Bind button events here instead of inline onclick attributes
         document.addEventListener('DOMContentLoaded', () => {
             const game = new Tetris();
+            const startScreen = document.getElementById('startScreen');
 
             // Start demo mode automatically
             game.startDemo();
+
+            // Start game from start screen
+            document.getElementById('startGameBtn').addEventListener('click', () => {
+                startScreen.classList.add('hidden');
+                game.stopDemo();
+                game.restart();
+            });
+
+            // Home button on start screen
+            document.getElementById('homeBtnScreen').addEventListener('click', () => {
+                window.location.href = '../../index.html';
+            });
 
             document.getElementById('homeBtn').addEventListener('click', () => {
                 window.location.href = '../../index.html';
