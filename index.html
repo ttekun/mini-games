@@ -220,6 +220,83 @@
     .blk.c5 { background: var(--pop-purple); box-shadow: 0 0 8px rgba(199,125,255,0.7); }
     .blk.empty { background: transparent; box-shadow: none; }
 
+    /* Rhythm lane icon */
+    .rhythm-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 0 auto 14px;
+      width: fit-content;
+      animation: iconBob 2.5s ease-in-out 0.4s infinite alternate;
+    }
+
+    /* 4 vertical lanes */
+    .rhythm-lanes {
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+      height: 64px;
+      padding: 0 2px;
+      position: relative;
+    }
+
+    .r-lane {
+      width: 14px;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Lane separator line */
+    .r-lane::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: rgba(255,255,255,0.1);
+      transform: translateX(-50%);
+    }
+
+    /* Falling note circles */
+    .r-note {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid;
+      position: absolute;
+      left: 0;
+    }
+
+    .r-note::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 4px; height: 3px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 50%;
+    }
+
+    .r-note.ln0 { border-color: var(--pop-sky);    background: rgba(56,217,245,0.25);  box-shadow: 0 0 8px rgba(56,217,245,0.8); }
+    .r-note.ln1 { border-color: var(--pop-pink);   background: rgba(255,110,180,0.25); box-shadow: 0 0 8px rgba(255,110,180,0.8); }
+    .r-note.ln2 { border-color: var(--pop-purple); background: rgba(199,125,255,0.25); box-shadow: 0 0 8px rgba(199,125,255,0.8); }
+    .r-note.ln3 { border-color: var(--pop-yellow); background: rgba(255,228,77,0.25);  box-shadow: 0 0 8px rgba(255,228,77,0.8); }
+
+    /* Judgment line at bottom */
+    .r-judgeline {
+      width: 80px;
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--pop-sky), var(--pop-pink), var(--pop-purple), var(--pop-yellow));
+      box-shadow: 0 0 10px rgba(255,110,180,0.6);
+      margin-top: 4px;
+    }
+
     .card-title {
       font-family: var(--font-main);
       font-size: 1.3rem;
@@ -319,7 +396,26 @@
 
       <a href="games/rhythm-tap/index.html" class="game-card rhythm">
         <div class="card-content">
-          <span class="card-icon">🎵</span>
+          <!-- Rhythm game icon: 4 lanes with falling note circles + judgment line -->
+          <div class="rhythm-icon">
+            <div class="rhythm-lanes">
+              <div class="r-lane">
+                <div class="r-note ln0" style="top:4px"></div>
+                <div class="r-note ln0" style="top:34px"></div>
+              </div>
+              <div class="r-lane">
+                <div class="r-note ln1" style="top:18px"></div>
+              </div>
+              <div class="r-lane">
+                <div class="r-note ln2" style="top:6px"></div>
+                <div class="r-note ln2" style="top:40px"></div>
+              </div>
+              <div class="r-lane">
+                <div class="r-note ln3" style="top:24px"></div>
+              </div>
+            </div>
+            <div class="r-judgeline"></div>
+          </div>
           <div class="card-title">NEON//BEAT</div>
           <div class="card-desc">リズムタップゲーム</div>
           <div class="card-badge">小学生1〜4</div>
