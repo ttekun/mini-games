@@ -1278,6 +1278,7 @@ document.querySelectorAll('.lane-btn').forEach(btn => {
 
   btn.addEventListener('touchstart', e => {
     e.preventDefault();
+    if (state !== 'playing') return;
     btn.classList.add('pressed');
     onTap(lane);
   }, { passive: false });
@@ -1288,6 +1289,7 @@ document.querySelectorAll('.lane-btn').forEach(btn => {
   }, { passive: false });
 
   btn.addEventListener('mousedown', () => {
+    if (state !== 'playing') return;
     btn.classList.add('pressed');
     onTap(lane);
   });
@@ -1300,6 +1302,7 @@ document.querySelectorAll('.lane-btn').forEach(btn => {
 const KEY_MAP = { a: 0, s: 1, d: 2, f: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3 };
 document.addEventListener('keydown', e => {
   if (e.repeat) return;
+  if (state !== 'playing') return;
   const lane = KEY_MAP[e.key];
   if (lane !== undefined) {
     e.preventDefault();
