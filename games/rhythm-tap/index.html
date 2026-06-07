@@ -753,6 +753,174 @@ function playSound(type) {
   osc.stop(audioCtx.currentTime + 0.3);
 }
 
+// ─── BGM (J-pop style, Web Audio API) ────────────────────────────────────────
+const BGM_BPM = 128;
+const BGM_BEAT = 60 / BGM_BPM;          // seconds per beat
+const BGM_BAR  = BGM_BEAT * 4;          // seconds per bar
+
+// Note frequencies (equal temperament, A4=440)
+const NOTE = (() => {
+  const base = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  return (name, oct) => 440 * Math.pow(2, (base[name[0]] + (name[1]==='#'?1:0) + (oct-4)*12 - 9) / 12);
+})();
+
+// J-pop melody: 16-note pattern (each = 1/4 beat = 1/16th note)
+// [freq, durationBeats, startBeat (within 8-beat phrase)]
+const MELODY_PHRASE = [
+  [NOTE('E',5), 0.5, 0],  [NOTE('G',5), 0.5, 0.5],
+  [NOTE('A',5), 1,   1],  [NOTE('G',5), 0.5, 2],
+  [NOTE('E',5), 0.5, 2.5],[NOTE('D',5), 1,   3],
+  [NOTE('C',5), 0.5, 4],  [NOTE('E',5), 0.5, 4.5],
+  [NOTE('G',5), 0.5, 5],  [NOTE('A',5), 0.5, 5.5],
+  [NOTE('B',5), 1,   6],  [NOTE('A',5), 0.5, 7],
+  [NOTE('G',5), 0.5, 7.5],
+];
+
+// Bass: root notes on beats 0,2 of each bar
+const BASS_PHRASE = [
+  [NOTE('C',3), 0.8, 0], [NOTE('G',3), 0.8, 2],
+  [NOTE('A',3), 0.8, 4], [NOTE('F',3), 0.8, 6],
+];
+
+// Chord pads (2-beat stabs)
+const PAD_PHRASE = [
+  [[NOTE('C',4), NOTE('E',4), NOTE('G',4)], 1.8, 0],
+  [[NOTE('G',3), NOTE('B',3), NOTE('D',4)], 1.8, 2],
+  [[NOTE('A',3), NOTE('C',4), NOTE('E',4)], 1.8, 4],
+  [[NOTE('F',3), NOTE('A',3), NOTE('C',4)], 1.8, 6],
+];
+
+const PHRASE_LEN = 8; // beats
+
+let bgmNodes = [];   // active source nodes for cleanup
+let bgmLoopId = null;
+let bgmGain = null;
+let bgmStartTime = 0;
+let bgmPlaying = false;
+
+function bgmPlayTone(freq, startTime, duration, type, gainVal, masterGain) {
+  const osc  = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  gain.connect(masterGain);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.01);
+  gain.gain.setValueAtTime(gainVal, startTime + duration * 0.75);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.05);
+  bgmNodes.push(osc);
+}
+
+function bgmPlayDrum(startTime, masterGain) {
+  // Kick — low sine burst
+  const kick = audioCtx.createOscillator();
+  const kGain = audioCtx.createGain();
+  kick.type = 'sine';
+  kick.frequency.setValueAtTime(160, startTime);
+  kick.frequency.exponentialRampToValueAtTime(40, startTime + 0.15);
+  kick.connect(kGain); kGain.connect(masterGain);
+  kGain.gain.setValueAtTime(0.7, startTime);
+  kGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+  kick.start(startTime); kick.stop(startTime + 0.25);
+  bgmNodes.push(kick);
+
+  // Snare — noise burst via buffer
+  const bufLen = audioCtx.sampleRate * 0.1;
+  const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+  const snare = audioCtx.createBufferSource();
+  const sGain = audioCtx.createGain();
+  const sFilter = audioCtx.createBiquadFilter();
+  sFilter.type = 'highpass'; sFilter.frequency.value = 1800;
+  snare.buffer = buf;
+  snare.connect(sFilter); sFilter.connect(sGain); sGain.connect(masterGain);
+  sGain.gain.setValueAtTime(0, startTime + BGM_BEAT);
+  sGain.gain.linearRampToValueAtTime(0.25, startTime + BGM_BEAT + 0.005);
+  sGain.gain.exponentialRampToValueAtTime(0.001, startTime + BGM_BEAT + 0.12);
+  snare.start(startTime + BGM_BEAT);
+  snare.stop(startTime + BGM_BEAT + 0.15);
+  bgmNodes.push(snare);
+
+  // Hi-hat every half beat
+  for (let h = 0; h < 4; h++) {
+    const ht = startTime + h * BGM_BEAT * 0.5;
+    const hBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+    const hData = hBuf.getChannelData(0);
+    for (let i = 0; i < hData.length; i++) hData[i] = Math.random() * 2 - 1;
+    const hat = audioCtx.createBufferSource();
+    const hGain = audioCtx.createGain();
+    const hFilter = audioCtx.createBiquadFilter();
+    hFilter.type = 'highpass'; hFilter.frequency.value = 8000;
+    hat.buffer = hBuf;
+    hat.connect(hFilter); hFilter.connect(hGain); hGain.connect(masterGain);
+    hGain.gain.setValueAtTime(0.12, ht);
+    hGain.gain.exponentialRampToValueAtTime(0.001, ht + 0.05);
+    hat.start(ht); hat.stop(ht + 0.06);
+    bgmNodes.push(hat);
+  }
+}
+
+function bgmSchedulePhrase(phraseStart) {
+  if (!bgmPlaying) return;
+
+  // Master gain for BGM
+  const masterGain = bgmGain;
+
+  // Drums: one bar = 2 beats, schedule 2 bars per phrase
+  for (let bar = 0; bar < 4; bar++) {
+    bgmPlayDrum(phraseStart + bar * BGM_BEAT * 2, masterGain);
+  }
+
+  // Melody
+  MELODY_PHRASE.forEach(([freq, dur, beat]) => {
+    bgmPlayTone(freq, phraseStart + beat * BGM_BEAT, dur * BGM_BEAT * 0.9,
+                'triangle', 0.18, masterGain);
+  });
+
+  // Bass
+  BASS_PHRASE.forEach(([freq, dur, beat]) => {
+    bgmPlayTone(freq, phraseStart + beat * BGM_BEAT, dur * BGM_BEAT,
+                'sawtooth', 0.12, masterGain);
+  });
+
+  // Pad chords
+  PAD_PHRASE.forEach(([freqs, dur, beat]) => {
+    freqs.forEach(freq => {
+      bgmPlayTone(freq, phraseStart + beat * BGM_BEAT, dur * BGM_BEAT,
+                  'sine', 0.06, masterGain);
+    });
+  });
+
+  // Schedule next phrase slightly ahead
+  const nextPhrase = phraseStart + PHRASE_LEN * BGM_BEAT;
+  const lookahead = nextPhrase - audioCtx.currentTime;
+  bgmLoopId = setTimeout(() => bgmSchedulePhrase(nextPhrase), (lookahead - 0.3) * 1000);
+}
+
+function startBGM() {
+  if (bgmPlaying) return;
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  bgmPlaying = true;
+  bgmGain = audioCtx.createGain();
+  bgmGain.gain.value = 0.5;
+  bgmGain.connect(audioCtx.destination);
+  bgmStartTime = audioCtx.currentTime + 0.05;
+  bgmSchedulePhrase(bgmStartTime);
+}
+
+function stopBGM() {
+  bgmPlaying = false;
+  clearTimeout(bgmLoopId);
+  bgmNodes.forEach(n => { try { n.stop(); } catch(_) {} });
+  bgmNodes = [];
+  if (bgmGain) { bgmGain.disconnect(); bgmGain = null; }
+}
+
 // ─── Note generation ──────────────────────────────────────────────────────────
 function spawnNote() {
   const d = DIFFICULTY[activeDiff];
@@ -960,6 +1128,7 @@ function startGame() {
   updateLives();
   state = 'playing';
   lastTime = performance.now();
+  startBGM();
   requestAnimationFrame(gameLoop);
 }
 
@@ -1241,6 +1410,7 @@ function showJudgment(type) {
 function endGame() {
   if (state === 'result') return;
   state = 'result';
+  stopBGM();
   const total = stats.perfect + stats.good + stats.miss;
   const acc = total > 0 ? (stats.perfect * 100 + stats.good * 60) / (total * 100) : 0;
   const rank = acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.70 ? 'B' : acc >= 0.50 ? 'C' : 'D';
