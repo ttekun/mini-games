@@ -674,6 +674,7 @@ let bgmPlaying = false;
 let bgmGain = null;
 let bgmNodes = [];
 let bgmLoopId = null;
+let bgmStartToken = 0;
 const PHRASE_LEN = 8; // beats per phrase
 
 // ─── Canvas setup ─────────────────────────────────────────────────────────────
@@ -1037,17 +1038,26 @@ function bgmSchedulePhrase(phraseStart) {
 function startBGM(level) {
   if (!bgmEnabled) return;
   stopBGM();
+  const token = ++bgmStartToken;
   initAudio();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  bgmLevel = level || 'sho1';
-  bgmPlaying = true;
-  bgmGain = audioCtx.createGain();
-  bgmGain.gain.value = 0.5;
-  bgmGain.connect(audioCtx.destination);
-  bgmSchedulePhrase(audioCtx.currentTime + 0.05);
+  const scheduleBGM = () => {
+    if (!bgmEnabled || token !== bgmStartToken) return;
+    bgmLevel = level || 'sho1';
+    bgmPlaying = true;
+    bgmGain = audioCtx.createGain();
+    bgmGain.gain.value = 0.5;
+    bgmGain.connect(audioCtx.destination);
+    bgmSchedulePhrase(audioCtx.currentTime + 0.05);
+  };
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(scheduleBGM).catch(err => console.warn('BGM resume failed:', err));
+  } else {
+    scheduleBGM();
+  }
 }
 
 function stopBGM() {
+  bgmStartToken++;
   bgmPlaying = false;
   clearTimeout(bgmLoopId);
   bgmNodes.forEach(n => { try { n.stop(); } catch(_) {} });
@@ -1071,15 +1081,19 @@ function toggleBGM() {
 
 function updateBGMButton() {
   const btn = document.getElementById('bgm-toggle');
+  if (!btn) return;
   const icon = btn.querySelector('.icon');
   const label = btn.querySelector('.label');
+  if (!icon || !label) return;
   
   if (bgmEnabled) {
-    btn.className = 'on';
+    btn.classList.add('on');
+    btn.classList.remove('off');
     icon.textContent = '🎵';
     label.textContent = 'ON';
   } else {
-    btn.className = 'off';
+    btn.classList.add('off');
+    btn.classList.remove('on');
     icon.textContent = '🔇';
     label.textContent = 'OFF';
   }
@@ -1565,7 +1579,7 @@ function updateLives() {
   hearts.forEach((h, i) => {
     h.textContent = i < lives ? '▰' : '▱';
     h.style.opacity = i < lives ? '1' : '0.25';
-    h.style.color = i < lives ? 'var(--cp-pink)' : 'rgba(255,0,110,0.3)';
+    h.style.color = i < lives ? 'var(--pop-pink)' : 'rgba(255,0,110,0.3)';
   });
 }
 

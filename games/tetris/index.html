@@ -742,6 +742,7 @@
         let bgmMasterGain = null;
         let bgmPlaying = false;
         let bgmCurrentLevel = null;
+        let bgmStartToken = 0;
         let bgmEnabled = localStorage.getItem('bgmEnabled') !== 'false'; // Default ON
 
         function bgmInitAudio() {
@@ -851,24 +852,28 @@
         }
 
         function startBGM(level) {
-          console.log('startBGM called with level:', level, 'bgmEnabled:', bgmEnabled);
-          if (!bgmEnabled) {
-            console.log('BGM is disabled, not starting');
-            return;
-          }
+          if (!bgmEnabled) return;
           stopBGM();
+          const token = ++bgmStartToken;
           bgmInitAudio();
-          if (bgmAudioCtx.state === 'suspended') bgmAudioCtx.resume();
-          bgmCurrentLevel = Math.min(Math.max(level, 1), 5);
-          bgmPlaying = true;
-          bgmMasterGain = bgmAudioCtx.createGain();
-          bgmMasterGain.gain.value = 0.5;
-          bgmMasterGain.connect(bgmAudioCtx.destination);
-          bgmSchedulePhrase(bgmAudioCtx.currentTime + 0.05);
-          console.log('BGM started successfully');
+          const scheduleBGM = () => {
+            if (!bgmEnabled || token !== bgmStartToken) return;
+            bgmCurrentLevel = Math.min(Math.max(level, 1), 5);
+            bgmPlaying = true;
+            bgmMasterGain = bgmAudioCtx.createGain();
+            bgmMasterGain.gain.value = 0.5;
+            bgmMasterGain.connect(bgmAudioCtx.destination);
+            bgmSchedulePhrase(bgmAudioCtx.currentTime + 0.05);
+          };
+          if (bgmAudioCtx.state === 'suspended') {
+            bgmAudioCtx.resume().then(scheduleBGM).catch(err => console.warn('BGM resume failed:', err));
+          } else {
+            scheduleBGM();
+          }
         }
 
         function stopBGM() {
+          bgmStartToken++;
           bgmPlaying = false;
           clearTimeout(bgmLoopId);
           bgmNodes.forEach(n => { try { n.stop(); } catch(_) {} });
@@ -876,36 +881,35 @@
           if (bgmMasterGain) { bgmMasterGain.disconnect(); bgmMasterGain = null; }
         }
 
-        function toggleBGM() {
+        function toggleBGM(tetris) {
           bgmEnabled = !bgmEnabled;
           localStorage.setItem('bgmEnabled', bgmEnabled);
           updateBGMButton();
           
-          console.log('BGM toggle:', bgmEnabled, 'isPlaying:', window.tetrisGame?.isPlaying);
-          
           if (bgmEnabled) {
-            const tetris = window.tetrisGame;
             if (tetris && tetris.isPlaying) {
-              console.log('Starting BGM for level:', tetris.level);
               startBGM(tetris.level);
             }
           } else {
-            console.log('Stopping BGM');
             stopBGM();
           }
         }
 
         function updateBGMButton() {
           const btn = document.getElementById('bgm-toggle');
+          if (!btn) return;
           const icon = btn.querySelector('.icon');
           const label = btn.querySelector('.label');
+          if (!icon || !label) return;
           
           if (bgmEnabled) {
-            btn.className = 'on';
+            btn.classList.add('on');
+            btn.classList.remove('off');
             icon.textContent = '🎵';
             label.textContent = 'ON';
           } else {
-            btn.className = 'off';
+            btn.classList.add('off');
+            btn.classList.remove('on');
             icon.textContent = '🔇';
             label.textContent = 'OFF';
           }
@@ -1629,7 +1633,7 @@
             document.getElementById('restartBtn').addEventListener('click', () => game.restart());
             
             // BGM toggle
-            document.getElementById('bgm-toggle').addEventListener('click', toggleBGM);
+            document.getElementById('bgm-toggle').addEventListener('click', () => toggleBGM(game));
             
             // Initialize BGM button state
             updateBGMButton();
