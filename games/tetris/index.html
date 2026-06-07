@@ -582,6 +582,250 @@
     </div>
 
     <script>
+        // ─── BGM (J-pop style, Web Audio API, levels 1-5) ─────────────────────────
+        const NOTE = (() => {
+          const base = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+          return (name, oct) => {
+            const sharp = name.length > 1 && name[1] === '#' ? 1 : 0;
+            return 440 * Math.pow(2, (base[name[0]] + sharp + (oct - 4) * 12 - 9) / 12);
+          };
+        })();
+
+        // BGM data per level: bpm, melody, bass, pads
+        // Each note: [freq, durationBeats, startBeat]  (phrase = 8 beats)
+        const TETRIS_BGM = {
+          1: {
+            bpm: 90,
+            melody: [
+              [NOTE('C',5),0.5,0], [NOTE('E',5),0.5,0.5], [NOTE('G',5),1,1],
+              [NOTE('E',5),0.5,2], [NOTE('D',5),0.5,2.5], [NOTE('C',5),1,3],
+              [NOTE('E',5),0.5,4], [NOTE('G',5),0.5,4.5], [NOTE('A',5),1,5],
+              [NOTE('G',5),0.5,6], [NOTE('E',5),0.5,6.5], [NOTE('C',5),1,7],
+            ],
+            bass: [
+              [NOTE('C',3),0.8,0],[NOTE('G',3),0.8,2],[NOTE('A',3),0.8,4],[NOTE('F',3),0.8,6],
+            ],
+            pads: [
+              [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,0],
+              [[NOTE('G',3),NOTE('B',3),NOTE('D',4)],1.8,2],
+              [[NOTE('A',3),NOTE('C',4),NOTE('E',4)],1.8,4],
+              [[NOTE('F',3),NOTE('A',3),NOTE('C',4)],1.8,6],
+            ],
+          },
+          2: {
+            bpm: 104,
+            melody: [
+              [NOTE('G',5),0.5,0], [NOTE('A',5),0.5,0.5], [NOTE('B',5),1,1],
+              [NOTE('A',5),0.5,2], [NOTE('G',5),0.5,2.5], [NOTE('E',5),1,3],
+              [NOTE('D',5),0.5,4], [NOTE('E',5),0.5,4.5], [NOTE('G',5),1,5],
+              [NOTE('A',5),0.5,6], [NOTE('B',5),0.5,6.5], [NOTE('G',5),1,7],
+            ],
+            bass: [
+              [NOTE('G',3),0.8,0],[NOTE('D',3),0.8,2],[NOTE('C',3),0.8,4],[NOTE('D',3),0.8,6],
+            ],
+            pads: [
+              [[NOTE('G',3),NOTE('B',3),NOTE('D',4)],1.8,0],
+              [[NOTE('D',3),NOTE('F#',3),NOTE('A',3)],1.8,2],
+              [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,4],
+              [[NOTE('D',3),NOTE('F#',3),NOTE('A',3)],1.8,6],
+            ],
+          },
+          3: {
+            bpm: 116,
+            melody: [
+              [NOTE('A',5),0.5,0], [NOTE('C',6),0.5,0.5],[NOTE('E',6),0.75,1],
+              [NOTE('D',6),0.5,2], [NOTE('C',6),0.5,2.5],[NOTE('A',5),0.75,3],
+              [NOTE('G',5),0.5,4], [NOTE('A',5),0.5,4.5],[NOTE('C',6),0.75,5],
+              [NOTE('E',6),0.5,6], [NOTE('D',6),0.25,6.5],[NOTE('C',6),0.25,6.75],[NOTE('A',5),0.5,7],
+            ],
+            bass: [
+              [NOTE('A',3),0.8,0],[NOTE('E',3),0.8,2],[NOTE('F',3),0.8,4],[NOTE('E',3),0.8,6],
+            ],
+            pads: [
+              [[NOTE('A',3),NOTE('C',4),NOTE('E',4)],1.8,0],
+              [[NOTE('E',3),NOTE('G',3),NOTE('B',3)],1.8,2],
+              [[NOTE('F',3),NOTE('A',3),NOTE('C',4)],1.8,4],
+              [[NOTE('E',3),NOTE('G',3),NOTE('B',3)],1.8,6],
+            ],
+          },
+          4: {
+            bpm: 126,
+            melody: [
+              [NOTE('D',6),0.5,0], [NOTE('E',6),0.25,0.5],[NOTE('F#',6),0.25,0.75],[NOTE('A',6),0.5,1],
+              [NOTE('G',6),0.5,2], [NOTE('F#',6),0.25,2.5],[NOTE('E',6),0.25,2.75],[NOTE('D',6),0.5,3],
+              [NOTE('F#',6),0.5,4],[NOTE('A',6),0.5,4.5],[NOTE('B',6),0.5,5],
+              [NOTE('A',6),0.25,6],[NOTE('G',6),0.25,6.25],[NOTE('F#',6),0.25,6.5],[NOTE('D',6),0.75,6.75],
+            ],
+            bass: [
+              [NOTE('D',3),0.6,0],[NOTE('A',3),0.6,2],[NOTE('G',3),0.6,4],[NOTE('A',3),0.6,6],
+            ],
+            pads: [
+              [[NOTE('D',4),NOTE('F#',4),NOTE('A',4)],1.6,0],
+              [[NOTE('A',3),NOTE('C#',4),NOTE('E',4)],1.6,2],
+              [[NOTE('G',3),NOTE('B',3),NOTE('D',4)],1.6,4],
+              [[NOTE('A',3),NOTE('C#',4),NOTE('E',4)],1.6,6],
+            ],
+          },
+          5: {
+            bpm: 138,
+            melody: [
+              [NOTE('E',6),0.25,0],[NOTE('F#',6),0.25,0.25],[NOTE('G#',6),0.25,0.5],[NOTE('B',6),0.5,0.75],
+              [NOTE('A',6),0.25,1.25],[NOTE('G#',6),0.25,1.5],[NOTE('F#',6),0.5,1.75],
+              [NOTE('E',6),0.25,2.25],[NOTE('F#',6),0.25,2.5],[NOTE('G#',6),0.25,2.75],
+              [NOTE('B',6),0.5,3],[NOTE('C#',7),0.25,3.5],[NOTE('B',6),0.25,3.75],
+              [NOTE('A',6),0.25,4],[NOTE('G#',6),0.25,4.25],[NOTE('F#',6),0.5,4.5],
+              [NOTE('E',6),0.25,5],[NOTE('F#',6),0.25,5.25],[NOTE('G#',6),0.25,5.5],[NOTE('B',6),0.75,5.75],
+              [NOTE('C#',7),0.5,6.5],[NOTE('B',6),0.5,7],
+            ],
+            bass: [
+              [NOTE('E',3),0.5,0],[NOTE('B',3),0.5,1],[NOTE('A',3),0.5,2],[NOTE('B',3),0.5,3],
+              [NOTE('E',3),0.5,4],[NOTE('B',3),0.5,5],[NOTE('A',3),0.5,6],[NOTE('B',3),0.5,7],
+            ],
+            pads: [
+              [[NOTE('E',4),NOTE('G#',4),NOTE('B',4)],1.4,0],
+              [[NOTE('B',3),NOTE('D#',4),NOTE('F#',4)],1.4,2],
+              [[NOTE('A',3),NOTE('C#',4),NOTE('E',4)],1.4,4],
+              [[NOTE('B',3),NOTE('D#',4),NOTE('F#',4)],1.4,6],
+            ],
+          },
+        };
+
+        const BGM_PHRASE_LEN = 8; // beats
+
+        let bgmAudioCtx = null;
+        let bgmNodes = [];
+        let bgmLoopId = null;
+        let bgmMasterGain = null;
+        let bgmPlaying = false;
+        let bgmCurrentLevel = null;
+
+        function bgmInitAudio() {
+          if (!bgmAudioCtx) {
+            bgmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+        }
+
+        function bgmPlayTone(freq, startTime, duration, type, gainVal, masterGain) {
+          const osc  = bgmAudioCtx.createOscillator();
+          const gain = bgmAudioCtx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(masterGain);
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.01);
+          gain.gain.setValueAtTime(gainVal, startTime + duration * 0.75);
+          gain.gain.linearRampToValueAtTime(0, startTime + duration);
+          osc.start(startTime);
+          osc.stop(startTime + duration + 0.05);
+          bgmNodes.push(osc);
+        }
+
+        function bgmPlayDrum(startTime, beat, masterGain) {
+          // Kick on beat 0
+          const kick = bgmAudioCtx.createOscillator();
+          const kGain = bgmAudioCtx.createGain();
+          kick.type = 'sine';
+          kick.frequency.setValueAtTime(160, startTime);
+          kick.frequency.exponentialRampToValueAtTime(40, startTime + 0.15);
+          kick.connect(kGain); kGain.connect(masterGain);
+          kGain.gain.setValueAtTime(0.7, startTime);
+          kGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+          kick.start(startTime); kick.stop(startTime + 0.25);
+          bgmNodes.push(kick);
+
+          // Snare on beat 1
+          const snareTime = startTime + beat;
+          const bufLen = bgmAudioCtx.sampleRate * 0.1;
+          const buf = bgmAudioCtx.createBuffer(1, bufLen, bgmAudioCtx.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+          const snare = bgmAudioCtx.createBufferSource();
+          const sGain = bgmAudioCtx.createGain();
+          const sFilter = bgmAudioCtx.createBiquadFilter();
+          sFilter.type = 'highpass'; sFilter.frequency.value = 1800;
+          snare.buffer = buf;
+          snare.connect(sFilter); sFilter.connect(sGain); sGain.connect(masterGain);
+          sGain.gain.setValueAtTime(0, snareTime);
+          sGain.gain.linearRampToValueAtTime(0.25, snareTime + 0.005);
+          sGain.gain.exponentialRampToValueAtTime(0.001, snareTime + 0.12);
+          snare.start(snareTime); snare.stop(snareTime + 0.15);
+          bgmNodes.push(snare);
+
+          // Hi-hat every half beat
+          for (let h = 0; h < 2; h++) {
+            const ht = startTime + h * beat;
+            const hBuf = bgmAudioCtx.createBuffer(1, bgmAudioCtx.sampleRate * 0.04, bgmAudioCtx.sampleRate);
+            const hData = hBuf.getChannelData(0);
+            for (let i = 0; i < hData.length; i++) hData[i] = Math.random() * 2 - 1;
+            const hat = bgmAudioCtx.createBufferSource();
+            const hGain = bgmAudioCtx.createGain();
+            const hFilter = bgmAudioCtx.createBiquadFilter();
+            hFilter.type = 'highpass'; hFilter.frequency.value = 8000;
+            hat.buffer = hBuf;
+            hat.connect(hFilter); hFilter.connect(hGain); hGain.connect(masterGain);
+            hGain.gain.setValueAtTime(0.1, ht);
+            hGain.gain.exponentialRampToValueAtTime(0.001, ht + 0.04);
+            hat.start(ht); hat.stop(ht + 0.05);
+            bgmNodes.push(hat);
+          }
+        }
+
+        function bgmSchedulePhrase(phraseStart) {
+          if (!bgmPlaying) return;
+          const cfg = TETRIS_BGM[bgmCurrentLevel];
+          const beat = 60 / cfg.bpm;
+          const mg = bgmMasterGain;
+
+          // Drums: 4 bars per phrase (bar = 2 beats)
+          for (let bar = 0; bar < 4; bar++) {
+            bgmPlayDrum(phraseStart + bar * beat * 2, beat, mg);
+          }
+
+          // Melody (triangle — bright & cute)
+          cfg.melody.forEach(([freq, dur, b]) => {
+            bgmPlayTone(freq, phraseStart + b * beat, dur * beat * 0.88, 'triangle', 0.18, mg);
+          });
+
+          // Bass (sawtooth)
+          cfg.bass.forEach(([freq, dur, b]) => {
+            bgmPlayTone(freq, phraseStart + b * beat, dur * beat, 'sawtooth', 0.11, mg);
+          });
+
+          // Pad chords (sine)
+          cfg.pads.forEach(([freqs, dur, b]) => {
+            freqs.forEach(freq => {
+              bgmPlayTone(freq, phraseStart + b * beat, dur * beat, 'sine', 0.055, mg);
+            });
+          });
+
+          // Schedule next phrase
+          const nextPhrase = phraseStart + BGM_PHRASE_LEN * beat;
+          const wait = (nextPhrase - bgmAudioCtx.currentTime - 0.3) * 1000;
+          bgmLoopId = setTimeout(() => bgmSchedulePhrase(nextPhrase), Math.max(0, wait));
+        }
+
+        function startBGM(level) {
+          stopBGM();
+          bgmInitAudio();
+          if (bgmAudioCtx.state === 'suspended') bgmAudioCtx.resume();
+          bgmCurrentLevel = Math.min(Math.max(level, 1), 5);
+          bgmPlaying = true;
+          bgmMasterGain = bgmAudioCtx.createGain();
+          bgmMasterGain.gain.value = 0.5;
+          bgmMasterGain.connect(bgmAudioCtx.destination);
+          bgmSchedulePhrase(bgmAudioCtx.currentTime + 0.05);
+        }
+
+        function stopBGM() {
+          bgmPlaying = false;
+          clearTimeout(bgmLoopId);
+          bgmNodes.forEach(n => { try { n.stop(); } catch(_) {} });
+          bgmNodes = [];
+          if (bgmMasterGain) { bgmMasterGain.disconnect(); bgmMasterGain = null; }
+        }
+        // ──────────────────────────────────────────────────────────────────────────
+
         class Tetris {
             constructor() {
                 this.canvas = document.getElementById('board');
@@ -792,6 +1036,7 @@
                     if (newLevel > this.level) {
                         this.level = newLevel;
                         this.dropInterval = this.levelDropInterval();
+                        startBGM(this.level);
                     }
                     
                     this.updateUI();
@@ -1091,20 +1336,24 @@
                 this.isPaused = !this.isPaused;
                 if (!this.isPaused) {
                     this.startLoop();
+                    startBGM(this.level);
                 } else {
                     this.stopLoop();
+                    stopBGM();
                 }
             }
             
             gameOver() {
                 this.isGameOver = true;
                 this.stopLoop();
+                stopBGM();
                 if (this.finalScoreEl) this.finalScoreEl.textContent = this.score.toLocaleString();
                 if (this.gameOverEl) this.gameOverEl.style.display = 'block';
             }
             
             restart(startLevel = 1) {
                 this.stopLoop();
+                stopBGM();
 
                 this.board = Array(this.ROWS).fill().map(() => Array(this.COLS).fill(0));
                 this.score = 0;
@@ -1122,6 +1371,7 @@
                 this.spawnPiece();
                 this.updateUI();
                 this.startLoop();
+                startBGM(this.level);
             }
             
             // Compute the drop interval for the current level
@@ -1275,10 +1525,12 @@
 
             // Home button on start screen
             document.getElementById('homeBtnScreen').addEventListener('click', () => {
+                stopBGM();
                 window.location.href = '../../index.html';
             });
 
             document.getElementById('homeBtn').addEventListener('click', () => {
+                stopBGM();
                 window.location.href = '../../index.html';
             });
             document.getElementById('startBtn').addEventListener('click', () => game.togglePause());
