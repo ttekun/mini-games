@@ -110,6 +110,46 @@
       transition: all 0.2s;
     }
 
+    /* BGM Toggle Button */
+    #bgm-toggle {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50px;
+      padding: 8px 16px;
+      font-family: var(--font-main);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 80px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      touch-action: manipulation;
+    }
+
+    #bgm-toggle:active {
+      transform: scale(0.95);
+    }
+
+    #bgm-toggle.on {
+      background: linear-gradient(135deg, rgba(77,255,195,0.3), rgba(56,217,245,0.3));
+      border-color: var(--pop-mint);
+      color: var(--pop-mint);
+      box-shadow: 0 0 12px rgba(77,255,195,0.4);
+    }
+
+    #bgm-toggle.off {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.3);
+    }
+
+    #bgm-toggle .icon {
+      font-size: 1.1rem;
+    }
+
     /* ── Canvases ── */
     #game-canvas {
       position: absolute;
@@ -484,6 +524,10 @@
     <div id="score-display">0</div>
     <div id="combo-display"></div>
     <div id="life-display"></div>
+    <button type="button" id="bgm-toggle" class="on">
+      <span class="icon">🎵</span>
+      <span class="label">ON</span>
+    </button>
   </div>
 
   <!-- Judgment text -->
@@ -622,6 +666,15 @@ const SONG_DURATION = 60000; // 60s
 
 // Audio context
 let audioCtx = null;
+
+// BGM state
+let bgmEnabled = localStorage.getItem('bgmEnabled') !== 'false'; // Default ON
+let bgmLevel = 'sho1';
+let bgmPlaying = false;
+let bgmGain = null;
+let bgmNodes = [];
+let bgmLoopId = null;
+const PHRASE_LEN = 8; // beats per phrase
 
 // ─── Canvas setup ─────────────────────────────────────────────────────────────
 const gameCanvas = document.getElementById('game-canvas');
@@ -1009,12 +1062,44 @@ function stopBGM() {
   if (bgmGain) { bgmGain.disconnect(); bgmGain = null; }
 }
 
+function toggleBGM() {
+  bgmEnabled = !bgmEnabled;
+  localStorage.setItem('bgmEnabled', bgmEnabled);
+  updateBGMButton();
+  
+  if (bgmEnabled && state === 'playing') {
+    startBGM(currentLevel);
+  } else {
+    stopBGM();
+  }
+}
+
+function updateBGMButton() {
+  const btn = document.getElementById('bgm-toggle');
+  const icon = btn.querySelector('.icon');
+  const label = btn.querySelector('.label');
+  
+  if (bgmEnabled) {
+    btn.className = 'on';
+    icon.textContent = '🎵';
+    label.textContent = 'ON';
+  } else {
+    btn.className = 'off';
+    icon.textContent = '🔇';
+    label.textContent = 'OFF';
+  }
+}
+
 // ─── Note generation ──────────────────────────────────────────────────────────
 function spawnNote() {
   const d = DIFFICULTY[activeDiff];
   const laneCount = Math.random() < d.density ? (Math.random() < 0.15 ? 2 : 1) : 1;
   const lanes = shuffleArr([0, 1, 2, 3]).slice(0, laneCount);
   lanes.forEach(lane => {
+    // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
+    const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    
     notes.push({
       lane,
       y: -NOTE_RADIUS,
@@ -1023,6 +1108,7 @@ function spawnNote() {
       missed: false,
       hitEffect: 0,
       color: LANE_COLORS[lane],
+      dino: emoji,
     });
   });
 }
@@ -1076,6 +1162,10 @@ function demoLoop(ts) {
   // Spawn demo notes
   if (demoTimer >= demoNextNote) {
     const lane = Math.floor(Math.random() * LANE_COUNT);
+    // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
+    const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    
     demoNotes.push({
       lane,
       y: -NOTE_RADIUS,
@@ -1084,6 +1174,7 @@ function demoLoop(ts) {
       missed: false,
       hitEffect: 0,
       color: LANE_COLORS[lane],
+      dino: emoji,
     });
     demoNextNote += DEMO_BEAT;
   }
@@ -1178,18 +1269,24 @@ function drawDemo() {
     } else {
       gc.shadowColor = n.color;
       gc.shadowBlur = 22;
-      const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
-                                          NOTE_RADIUS * 0.1, cx, cy, NOTE_RADIUS);
-      rg.addColorStop(0,    '#ffffff');
-      rg.addColorStop(0.25, n.color);
-      rg.addColorStop(1,    n.color + 'bb');
-      drawNote(gc, cx, cy, NOTE_RADIUS);
-      gc.fillStyle = rg;
-      gc.fill();
-      drawNote(gc, cx, cy, NOTE_RADIUS);
-      gc.strokeStyle = 'rgba(255,255,255,0.6)';
-      gc.lineWidth = 2;
-      gc.stroke();
+      
+      // Use dinosaur emoji for sho1 difficulty in demo mode
+      if (diff === 'sho1') {
+        drawDinoNote(gc, cx, cy, NOTE_RADIUS, n.color, n.dino);
+      } else {
+        const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
+                                            NOTE_RADIUS * 0.1, cx, cy, NOTE_RADIUS);
+        rg.addColorStop(0,    '#ffffff');
+        rg.addColorStop(0.25, n.color);
+        rg.addColorStop(1,    n.color + 'bb');
+        drawNote(gc, cx, cy, NOTE_RADIUS);
+        gc.fillStyle = rg;
+        gc.fill();
+        drawNote(gc, cx, cy, NOTE_RADIUS);
+        gc.strokeStyle = 'rgba(255,255,255,0.6)';
+        gc.lineWidth = 2;
+        gc.stroke();
+      }
       gc.shadowBlur = 0;
     }
     gc.globalAlpha = 1;
@@ -1270,6 +1367,18 @@ function drawNote(ctx, cx, cy, r) {
   ctx.closePath();
 }
 
+// Cute dinosaur emoji note helper
+function drawDinoNote(ctx, cx, cy, r, color, dinoEmoji) {
+  ctx.font = `${r * 3.2}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 15;
+  ctx.fillText(dinoEmoji, cx, cy);
+  ctx.shadowBlur = 0;
+}
+
 function draw() {
   gc.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
 
@@ -1344,31 +1453,36 @@ function draw() {
       gc.shadowBlur = 0;
 
     } else {
-      // Normal note — glossy circle
+      // Normal note — glossy circle or dinosaur emoji for sho1
       gc.shadowColor = n.color;
       gc.shadowBlur = 22;
 
-      // Main fill
-      const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
-                                          NOTE_RADIUS * 0.1, cx, cy, NOTE_RADIUS);
-      rg.addColorStop(0,   '#ffffff');
-      rg.addColorStop(0.25, n.color);
-      rg.addColorStop(1,   n.color + 'bb');
-      drawNote(gc, cx, cy, NOTE_RADIUS);
-      gc.fillStyle = rg;
-      gc.fill();
+      // Use dinosaur emoji for sho1 difficulty
+      if (diff === 'sho1') {
+        drawDinoNote(gc, cx, cy, NOTE_RADIUS, n.color, n.dino);
+      } else {
+        // Main fill
+        const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
+                                            NOTE_RADIUS * 0.1, cx, cy, NOTE_RADIUS);
+        rg.addColorStop(0,   '#ffffff');
+        rg.addColorStop(0.25, n.color);
+        rg.addColorStop(1,   n.color + 'bb');
+        drawNote(gc, cx, cy, NOTE_RADIUS);
+        gc.fillStyle = rg;
+        gc.fill();
 
-      // White border glow
-      drawNote(gc, cx, cy, NOTE_RADIUS);
-      gc.strokeStyle = 'rgba(255,255,255,0.6)';
-      gc.lineWidth = 2;
-      gc.stroke();
+        // White border glow
+        drawNote(gc, cx, cy, NOTE_RADIUS);
+        gc.strokeStyle = 'rgba(255,255,255,0.6)';
+        gc.lineWidth = 2;
+        gc.stroke();
 
-      // Small gloss highlight
-      gc.beginPath();
-      gc.arc(cx - NOTE_RADIUS * 0.3, cy - NOTE_RADIUS * 0.3, NOTE_RADIUS * 0.22, 0, Math.PI * 2);
-      gc.fillStyle = 'rgba(255,255,255,0.45)';
-      gc.fill();
+        // Small gloss highlight
+        gc.beginPath();
+        gc.arc(cx - NOTE_RADIUS * 0.3, cy - NOTE_RADIUS * 0.3, NOTE_RADIUS * 0.22, 0, Math.PI * 2);
+        gc.fillStyle = 'rgba(255,255,255,0.45)';
+        gc.fill();
+      }
 
       gc.shadowBlur = 0;
     }
@@ -1580,6 +1694,12 @@ document.getElementById('start-btn').addEventListener('click', () => {
   document.getElementById('start-screen').classList.add('hidden');
   startGame();
 });
+
+// BGM toggle
+document.getElementById('bgm-toggle').addEventListener('click', toggleBGM);
+
+// Initialize BGM button state
+updateBGMButton();
 
 // Next level
 document.getElementById('next-btn').addEventListener('click', () => {

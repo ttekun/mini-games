@@ -267,6 +267,46 @@
             box-shadow: none;
         }
         
+        /* BGM Toggle Button */
+        #bgm-toggle {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            touch-action: manipulation;
+        }
+
+        #bgm-toggle:active {
+            transform: scale(0.95);
+        }
+
+        #bgm-toggle.on {
+            background: linear-gradient(135deg, rgba(77,255,195,0.3), rgba(56,217,245,0.3));
+            border-color: var(--pop-mint);
+            color: var(--pop-mint);
+            box-shadow: 0 0 12px rgba(77,255,195,0.4);
+        }
+
+        #bgm-toggle.off {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.3);
+        }
+
+        #bgm-toggle .icon {
+            font-size: 1.1rem;
+        }
+        
         .side-controls.hidden {
             display: none !important;
         }
@@ -526,6 +566,10 @@
             <h3>NEXT</h3>
             <canvas id="nextCanvas" class="next-preview" width="50" height="40"></canvas>
         </div>
+        <button type="button" id="bgm-toggle" class="on">
+            <span class="icon">🎵</span>
+            <span class="label">ON</span>
+        </button>
     </div>
     
     <!-- 게임 영역 + 좌우 버튼 -->
@@ -698,6 +742,7 @@
         let bgmMasterGain = null;
         let bgmPlaying = false;
         let bgmCurrentLevel = null;
+        let bgmEnabled = localStorage.getItem('bgmEnabled') !== 'false'; // Default ON
 
         function bgmInitAudio() {
           if (!bgmAudioCtx) {
@@ -806,6 +851,7 @@
         }
 
         function startBGM(level) {
+          if (!bgmEnabled) return;
           stopBGM();
           bgmInitAudio();
           if (bgmAudioCtx.state === 'suspended') bgmAudioCtx.resume();
@@ -823,6 +869,35 @@
           bgmNodes.forEach(n => { try { n.stop(); } catch(_) {} });
           bgmNodes = [];
           if (bgmMasterGain) { bgmMasterGain.disconnect(); bgmMasterGain = null; }
+        }
+
+        function toggleBGM() {
+          bgmEnabled = !bgmEnabled;
+          localStorage.setItem('bgmEnabled', bgmEnabled);
+          updateBGMButton();
+          
+          const tetris = window.tetrisGame;
+          if (bgmEnabled && tetris && tetris.isPlaying) {
+            startBGM(tetris.level);
+          } else {
+            stopBGM();
+          }
+        }
+
+        function updateBGMButton() {
+          const btn = document.getElementById('bgm-toggle');
+          const icon = btn.querySelector('.icon');
+          const label = btn.querySelector('.label');
+          
+          if (bgmEnabled) {
+            btn.className = 'on';
+            icon.textContent = '🎵';
+            label.textContent = 'ON';
+          } else {
+            btn.className = 'off';
+            icon.textContent = '🔇';
+            label.textContent = 'OFF';
+          }
         }
         // ──────────────────────────────────────────────────────────────────────────
 
@@ -852,6 +927,7 @@
                 this.isPaused = true;
                 this.isGameOver = false;
                 this.isDroppingFast = false;
+                this.isPlaying = false;
                 // requestAnimationFrame ID — used to prevent duplicate loops
                 this.rafId = null;
                 
@@ -1335,9 +1411,11 @@
                 
                 this.isPaused = !this.isPaused;
                 if (!this.isPaused) {
+                    this.isPlaying = true;
                     this.startLoop();
                     startBGM(this.level);
                 } else {
+                    this.isPlaying = false;
                     this.stopLoop();
                     stopBGM();
                 }
@@ -1345,6 +1423,7 @@
             
             gameOver() {
                 this.isGameOver = true;
+                this.isPlaying = false;
                 this.stopLoop();
                 stopBGM();
                 if (this.finalScoreEl) this.finalScoreEl.textContent = this.score.toLocaleString();
@@ -1362,6 +1441,7 @@
                 this.dropInterval = this.levelDropInterval();
                 this.dropCounter = 0;
                 this.isPaused = false;
+                this.isPlaying = true;
                 this.isGameOver = false;
                 this.isDroppingFast = false;
                 
@@ -1536,6 +1616,12 @@
             document.getElementById('startBtn').addEventListener('click', () => game.togglePause());
             document.getElementById('toggleControls').addEventListener('click', () => game.toggleControls());
             document.getElementById('restartBtn').addEventListener('click', () => game.restart());
+            
+            // BGM toggle
+            document.getElementById('bgm-toggle').addEventListener('click', toggleBGM);
+            
+            // Initialize BGM button state
+            updateBGMButton();
         });
     </script>
 </body>
