@@ -934,14 +934,6 @@ const BGM_LEVELS = {
   },
 };
 
-const PHRASE_LEN = 8; // beats
-
-let bgmNodes = [];
-let bgmLoopId = null;
-let bgmGain = null;
-let bgmPlaying = false;
-let bgmLevel = null; // which level's BGM is currently active
-
 function bgmPlayTone(freq, startTime, duration, type, gainVal, masterGain) {
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
