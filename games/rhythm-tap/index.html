@@ -782,8 +782,162 @@ function hitY() {
   return gameCanvas.height * HIT_Y_RATIO;
 }
 
+// ─── Demo mode ────────────────────────────────────────────────────────────────
+let demoNotes = [];
+let demoTimer = 0;
+let demoNextNote = 0;
+let demoRafId = null;
+let demoLastTime = 0;
+const DEMO_BPM = 60;
+const DEMO_SPEED = 220;
+const DEMO_BEAT = (60 / DEMO_BPM) * 1000;
+
+function startDemo() {
+  demoNotes = [];
+  demoTimer = 0;
+  demoNextNote = DEMO_BEAT;
+  demoLastTime = performance.now();
+  demoRafId = requestAnimationFrame(demoLoop);
+}
+
+function stopDemo() {
+  if (demoRafId !== null) {
+    cancelAnimationFrame(demoRafId);
+    demoRafId = null;
+  }
+  demoNotes = [];
+  gc.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+}
+
+function demoLoop(ts) {
+  const dt = ts - demoLastTime;
+  demoLastTime = ts;
+  demoTimer += dt;
+
+  // Spawn demo notes
+  if (demoTimer >= demoNextNote) {
+    const lane = Math.floor(Math.random() * LANE_COUNT);
+    demoNotes.push({
+      lane,
+      y: -NOTE_RADIUS,
+      speed: DEMO_SPEED,
+      hit: false,
+      missed: false,
+      hitEffect: 0,
+      color: LANE_COLORS[lane],
+    });
+    demoNextNote += DEMO_BEAT;
+  }
+
+  // Update demo notes and auto-hit near judgment line
+  const jy = hitY();
+  demoNotes.forEach(n => {
+    if (!n.hit && !n.missed) {
+      n.y += n.speed * (dt / 1000);
+      // Auto-tap when note reaches judgment line
+      if (Math.abs(n.y - jy) < 20) {
+        n.hit = true;
+        n.hitEffect = 1;
+      }
+      // Auto-miss if passed
+      if (n.y > jy + 80) {
+        n.missed = true;
+      }
+    }
+    if (n.hitEffect > 0) n.hitEffect -= dt * 0.004;
+  });
+
+  // Clean up
+  demoNotes = demoNotes.filter(n => !(n.missed && n.y > gameCanvas.height + 60) &&
+                                     !(n.hit && n.hitEffect <= 0));
+
+  // Draw demo
+  drawDemo();
+  demoRafId = requestAnimationFrame(demoLoop);
+}
+
+function drawDemo() {
+  gc.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  const W = gameCanvas.width;
+  const H = gameCanvas.height;
+  const laneW = W / LANE_COUNT;
+
+  // Lane separators
+  for (let i = 1; i < LANE_COUNT; i++) {
+    gc.beginPath();
+    gc.moveTo(laneW * i, 0);
+    gc.lineTo(laneW * i, H);
+    gc.strokeStyle = 'rgba(0,255,231,0.07)';
+    gc.lineWidth = 1;
+    gc.stroke();
+  }
+
+  // Judgment line
+  const jy = hitY();
+  gc.shadowColor = '#00ffe7';
+  gc.shadowBlur = 14;
+  gc.fillStyle = 'rgba(0,255,231,0.85)';
+  gc.fillRect(0, jy - 1, W, 2);
+  gc.shadowBlur = 0;
+
+  // Diamond targets
+  for (let i = 0; i < LANE_COUNT; i++) {
+    const cx = laneX(i);
+    gc.shadowColor = LANE_COLORS[i];
+    gc.shadowBlur = 10;
+    drawDiamond(gc, cx, jy, NOTE_RADIUS + 5);
+    gc.strokeStyle = LANE_COLORS[i] + '55';
+    gc.lineWidth = 1.5;
+    gc.stroke();
+    gc.shadowBlur = 0;
+  }
+
+  // Notes
+  demoNotes.forEach(n => {
+    if (n.missed && n.hitEffect <= 0) return;
+    const cx = laneX(n.lane);
+    const cy = n.hit ? jy : n.y;
+    const alpha = n.hit ? Math.max(0, n.hitEffect) : 0.7;
+    gc.globalAlpha = alpha;
+
+    if (n.hit) {
+      const progress = 1 - n.hitEffect;
+      const outerR = NOTE_RADIUS * (1 + progress * 2.5);
+      drawDiamond(gc, cx, cy, outerR);
+      gc.strokeStyle = n.color;
+      gc.lineWidth = 2 * n.hitEffect;
+      gc.shadowColor = n.color;
+      gc.shadowBlur = 20 * n.hitEffect;
+      gc.stroke();
+      gc.shadowBlur = 0;
+    } else {
+      gc.shadowColor = n.color;
+      gc.shadowBlur = 20;
+      const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.3, cy - NOTE_RADIUS * 0.3,
+                                          1, cx, cy, NOTE_RADIUS);
+      rg.addColorStop(0, '#ffffff');
+      rg.addColorStop(0.3, n.color);
+      rg.addColorStop(1, n.color + 'aa');
+      drawDiamond(gc, cx, cy, NOTE_RADIUS);
+      gc.fillStyle = rg;
+      gc.fill();
+      drawDiamond(gc, cx, cy, NOTE_RADIUS);
+      gc.strokeStyle = '#ffffff88';
+      gc.lineWidth = 1.5;
+      gc.stroke();
+      gc.shadowBlur = 0;
+    }
+    gc.globalAlpha = 1;
+  });
+}
+
+// Start demo on page load
+startDemo();
+
 // ─── Game logic ───────────────────────────────────────────────────────────────
 function startGame() {
+  stopDemo();
   notes = [];
   score = 0;
   combo = 0;
@@ -1159,6 +1313,7 @@ document.getElementById('menu-btn').addEventListener('click', () => {
   document.getElementById('result-screen').classList.add('hidden');
   document.getElementById('start-screen').classList.remove('hidden');
   state = 'start';
+  startDemo();
 });
 
 // Home buttons
