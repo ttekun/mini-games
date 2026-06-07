@@ -876,9 +876,11 @@
           localStorage.setItem('bgmEnabled', bgmEnabled);
           updateBGMButton();
           
-          const tetris = window.tetrisGame;
-          if (bgmEnabled && tetris && tetris.isPlaying) {
-            startBGM(tetris.level);
+          if (bgmEnabled) {
+            const tetris = window.tetrisGame;
+            if (tetris && tetris.isPlaying) {
+              startBGM(tetris.level);
+            }
           } else {
             stopBGM();
           }
