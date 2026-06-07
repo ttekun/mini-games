@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <title>タイピング練習</title>
+  <style>
+    :root {
+      --pop-pink:   #ff6eb4;
+      --pop-sky:    #38d9f5;
+      --pop-yellow: #ffe44d;
+      --pop-mint:   #4dffc3;
+      --pop-purple: #c77dff;
+      --pop-orange: #ff9f43;
+      --font-main: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      background: linear-gradient(160deg, #1a0533 0%, #0a1a40 50%, #0d2b1a 100%);
+      font-family: var(--font-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #fff;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 0;
+    }
+
+    .back-btn {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.8rem;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 6px 14px;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { color: #fff; border-color: rgba(255,255,255,0.5); }
+
+    .title-wrap {
+      text-align: center;
+      flex: 1;
+    }
+
+    .title-wrap h1 {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--pop-yellow) 0%, var(--pop-orange) 50%, var(--pop-pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 10px rgba(255,228,77,0.5));
+    }
+
+    .title-sub {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 2px;
+    }
+
+    /* ===== MODE TABS ===== */
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 14px 0 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50px;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .mode-tab {
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.45);
+      border: none;
+      background: transparent;
+      font-family: var(--font-main);
+    }
+
+    .mode-tab.active {
+      background: linear-gradient(135deg, var(--pop-yellow), var(--pop-orange));
+      color: #1a0533;
+      box-shadow: 0 2px 12px rgba(255,228,77,0.4);
+    }
+
+    /* ===== GAME CONTROLS ===== */
+    .game-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .ctrl-select {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 50px;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .ctrl-select option { background: #1a0533; }
+
+    .ctrl-btn {
+      background: linear-gradient(135deg, var(--pop-mint), var(--pop-sky));
+      color: #1a0533;
+      font-family: var(--font-main);
+      font-size: 0.8rem;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .ctrl-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(56,217,245,0.4); }
+    .ctrl-btn:active { transform: scale(0.95); }
+
+    /* ===== DISPLAY AREA ===== */
+    .display-area {
+      width: 100%;
+      max-width: 900px;
+      padding: 0 12px;
+      margin-bottom: 10px;
+    }
+
+    /* Free mode display */
+    .free-display {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 16px 20px;
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .free-display-label {
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 2px;
+    }
+
+    .free-text-japanese {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--pop-yellow);
+      letter-spacing: 4px;
+      min-height: 2.5rem;
+      word-break: break-all;
+      filter: drop-shadow(0 0 8px rgba(255,228,77,0.5));
+    }
+
+    .free-text-roman {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 2px;
+      min-height: 1.2rem;
+      font-family: monospace;
+    }
+
+    /* Game mode display */
+    .game-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .question-card {
+      background: rgba(255,255,255,0.07);
+      border: 2px solid rgba(255,228,77,0.3);
+      border-radius: 20px;
+      padding: 20px 40px;
+      text-align: center;
+      min-width: 240px;
+      box-shadow: 0 0 30px rgba(255,228,77,0.1);
+    }
+
+    .question-label {
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .question-char {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--pop-yellow);
+      filter: drop-shadow(0 0 12px rgba(255,228,77,0.6));
+      line-height: 1.2;
+      position: relative;
+      display: inline-block;
+    }
+
+    /* ruby reading */
+    .question-ruby {
+      font-size: 0.85rem;
+      color: rgba(255,228,77,0.7);
+      letter-spacing: 3px;
+      margin-top: 4px;
+      min-height: 1.2rem;
+    }
+
+    .answer-display {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .answer-char {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      transition: all 0.15s;
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.4);
+    }
+
+    .answer-char.typed {
+      border-color: var(--pop-mint);
+      color: var(--pop-mint);
+      background: rgba(77,255,195,0.12);
+      box-shadow: 0 0 10px rgba(77,255,195,0.3);
+    }
+
+    .answer-char.current {
+      border-color: var(--pop-yellow);
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { box-shadow: 0 0 6px rgba(255,228,77,0.4); }
+      to   { box-shadow: 0 0 16px rgba(255,228,77,0.8); }
+    }
+
+    .answer-char.wrong {
+      border-color: var(--pop-pink);
+      background: rgba(255,110,180,0.2);
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* Score / Status */
+    .game-stats {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .stat-item { display: flex; gap: 6px; align-items: center; }
+    .stat-val {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--pop-mint);
+    }
+
+    /* Result feedback */
+    .result-flash {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      font-weight: 900;
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0;
+    }
+
+    .result-flash.correct {
+      color: var(--pop-mint);
+      filter: drop-shadow(0 0 20px rgba(77,255,195,0.8));
+      animation: flashAnim 0.8s ease forwards;
+    }
+    .result-flash.wrong {
+      color: var(--pop-pink);
+      filter: drop-shadow(0 0 20px rgba(255,110,180,0.8));
+      animation: flashAnim 0.8s ease forwards;
+    }
+
+    @keyframes flashAnim {
+      0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+      30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
+    }
+
+    /* ===== KEYBOARD ===== */
+    .keyboard-wrap {
+      width: 100%;
+      max-width: 900px;
+      padding: 0 6px;
+      user-select: none;
+    }
+
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .kb-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .kb-key {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      border-bottom: 3px solid rgba(0,0,0,0.35);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.85);
+      font-family: var(--font-main);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.08s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      /* Size set per row via JS */
+    }
+
+    .kb-key:active,
+    .kb-key.pressed {
+      background: rgba(255,228,77,0.25);
+      border-color: var(--pop-yellow);
+      color: var(--pop-yellow);
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+      box-shadow: 0 0 12px rgba(255,228,77,0.4);
+    }
+
+    .kb-key .key-main {
+      font-size: 1em;
+      line-height: 1;
+    }
+
+    .kb-key .key-sub {
+      font-size: 0.65em;
+      color: rgba(56,217,245,0.7);
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    /* Special keys */
+    .kb-key.key-space {
+      flex: 0 0 auto;
+    }
+
+    .kb-key.key-backspace,
+    .kb-key.key-enter,
+    .kb-key.key-shift,
+    .kb-key.key-special {
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* Input capture (invisible) */
+    #hidden-input {
+      position: fixed;
+      top: -9999px;
+      left: -9999px;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      border: none;
+      outline: none;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .title-wrap h1 { font-size: 1.2rem; }
+      .question-char { font-size: 2.8rem; }
+    }
+
+    /* ===== START / END SCREENS ===== */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,6,26,0.88);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .overlay h2 {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, var(--pop-yellow), var(--pop-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .overlay p {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.9rem;
+      text-align: center;
+      letter-spacing: 1px;
+      line-height: 1.8;
+    }
+
+    .overlay-score {
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--pop-mint);
+      filter: drop-shadow(0 0 16px rgba(77,255,195,0.6));
+    }
+
+    .overlay-btn {
+      background: linear-gradient(135deg, var(--pop-yellow), var(--pop-orange));
+      color: #1a0533;
+      font-family: var(--font-main);
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 12px 36px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(255,228,77,0.4);
+    }
+    .overlay-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(255,228,77,0.5); }
+    .overlay-btn:active { transform: scale(0.95); }
+
+    .overlay-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .overlay-sel-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.7);
+      font-family: var(--font-main);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .overlay-sel-btn:hover,
+    .overlay-sel-btn.selected {
+      background: rgba(255,228,77,0.15);
+      border-color: var(--pop-yellow);
+      color: var(--pop-yellow);
+    }
+
+    .hidden { display: none !important; }
+
+    /* combo display */
+    .combo-badge {
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: var(--pop-orange);
+      letter-spacing: 1px;
+      min-height: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hidden input to capture keyboard events on desktop -->
+<input id="hidden-input" type="text" autocomplete="off" autocorrect="off"
+       autocapitalize="off" spellcheck="false" inputmode="none" />
+
+<!-- START SCREEN -->
+<div class="overlay" id="start-screen">
+  <h2>タイピング練習</h2>
+  <p>モードをえらんでね！</p>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <button class="overlay-btn" onclick="startFreeMode()" style="background:linear-gradient(135deg,#4dffc3,#38d9f5);box-shadow:0 4px 20px rgba(77,255,195,0.4);">
+      ⌨ じゆうにタイピング
+    </button>
+    <button class="overlay-btn" onclick="showGameSetup()" style="background:linear-gradient(135deg,var(--pop-yellow),var(--pop-orange));">
+      🎮 ゲームモード
+    </button>
+  </div>
+</div>
+
+<!-- GAME SETUP SCREEN -->
+<div class="overlay hidden" id="setup-screen">
+  <h2 style="font-size:1.4rem;">ゲームせってい</h2>
+
+  <p>もじのしゅるい</p>
+  <div class="overlay-grid">
+    <button class="overlay-sel-btn selected" id="type-hiragana" onclick="selectType('hiragana')">ひらがな</button>
+    <button class="overlay-sel-btn" id="type-katakana" onclick="selectType('katakana')">カタカナ</button>
+    <button class="overlay-sel-btn" id="type-kanji1" onclick="selectType('kanji1')">かん字（１ねん）</button>
+    <button class="overlay-sel-btn" id="type-kanji4" onclick="selectType('kanji4')">かん字（４ねん）</button>
+  </div>
+
+  <p>レベル</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <button class="overlay-sel-btn selected" id="lvl-1" onclick="selectLevel(1)" style="min-width:130px;">小学生1ねん</button>
+    <button class="overlay-sel-btn" id="lvl-4" onclick="selectLevel(4)" style="min-width:130px;">小学生4ねん</button>
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <button class="overlay-btn" onclick="showStartScreen()" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);box-shadow:none;">もどる</button>
+    <button class="overlay-btn" onclick="startGameMode()">スタート！</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="overlay hidden" id="result-screen">
+  <h2>おわり！</h2>
+  <div style="text-align:center;">
+    <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:6px;">スコア</div>
+    <div class="overlay-score" id="final-score">0</div>
+    <div style="font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:8px;" id="final-stats"></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <button class="overlay-btn" onclick="retryGame()" style="background:linear-gradient(135deg,var(--pop-mint),var(--pop-sky));box-shadow:0 4px 20px rgba(77,255,195,0.4);">もういちど</button>
+    <button class="overlay-btn" onclick="showStartScreen()">もどる</button>
+  </div>
+</div>
+
+<!-- Flash feedback -->
+<div class="result-flash" id="result-flash"></div>
+
+<!-- MAIN CONTENT -->
+<div class="header">
+  <a href="../../index.html" class="back-btn">← もどる</a>
+  <div class="title-wrap">
+    <h1>タイピング練習</h1>
+    <div class="title-sub">⌨ TYPING PRACTICE</div>
+  </div>
+  <div style="width:70px"></div><!-- spacer -->
+</div>
+
+<!-- Mode tabs -->
+<div class="mode-tabs" id="mode-tabs">
+  <button class="mode-tab active" id="tab-free" onclick="switchTab('free')">⌨ じゆう</button>
+  <button class="mode-tab" id="tab-game" onclick="switchTab('game')">🎮 ゲーム</button>
+</div>
+
+<!-- ===== FREE MODE ===== -->
+<div id="free-section" class="display-area">
+  <div class="free-display">
+    <div class="free-display-label">▸ にゅうりょく</div>
+    <div class="free-text-japanese" id="free-japanese">ここにひらがながでるよ</div>
+    <div class="free-text-roman" id="free-roman">please type…</div>
+  </div>
+  <div style="text-align:center;margin-top:8px;">
+    <button class="ctrl-btn" onclick="clearFreeInput()" style="font-size:0.75rem;padding:4px 14px;">クリア</button>
+  </div>
+</div>
+
+<!-- ===== GAME MODE ===== -->
+<div id="game-section" class="display-area hidden">
+  <div class="game-display">
+    <div class="game-stats">
+      <div class="stat-item">スコア <span class="stat-val" id="score-val">0</span></div>
+      <div class="stat-item">もん <span class="stat-val" id="q-num">0</span>/<span class="stat-val" id="q-total">10</span></div>
+      <div class="stat-item">せいかい <span class="stat-val" id="correct-val">0</span></div>
+    </div>
+
+    <div class="combo-badge" id="combo-badge"></div>
+
+    <div class="question-card">
+      <div class="question-label">よんで タイピング！</div>
+      <div class="question-char" id="question-char">あ</div>
+      <div class="question-ruby" id="question-ruby"></div>
+    </div>
+
+    <div class="answer-display" id="answer-display"></div>
+  </div>
+</div>
+
+<!-- ===== KEYBOARD ===== -->
+<div class="keyboard-wrap" id="keyboard-wrap">
+  <div class="keyboard" id="keyboard"></div>
+</div>
+
+<script>
+/* =====================================================
+   ROMAJI → HIRAGANA CONVERSION ENGINE
+   ===================================================== */
+const ROMAJI_TABLE = [
+  // Longer matches first (order matters)
+  ['shi','し'],['chi','ち'],['tsu','つ'],['sha','しゃ'],['shu','しゅ'],['sho','しょ'],
+  ['cha','ちゃ'],['chu','ちゅ'],['cho','ちょ'],['tchi','っち'],['ttsu','っつ'],
+  ['kka','っか'],['kki','っき'],['kku','っく'],['kke','っけ'],['kko','っこ'],
+  ['ssa','っさ'],['ssi','っし'],['ssu','っす'],['sse','っせ'],['sso','っそ'],
+  ['tta','った'],['tti','っち'],['tte','って'],['tto','っと'],
+  ['ppa','っぱ'],['ppi','っぴ'],['ppu','っぷ'],['ppe','っぺ'],['ppo','っぽ'],
+  ['nna','っな'],['nni','っに'],['nnu','っぬ'],['nne','っね'],['nno','っの'],
+  ['rra','っら'],['rri','っり'],['rru','っる'],['rre','っれ'],['rro','っろ'],
+  ['hha','っは'],['hhi','っひ'],['hhu','っふ'],['hhe','っへ'],['hho','っほ'],
+  ['mma','っま'],['mmi','っみ'],['mmu','っむ'],['mme','っめ'],['mmo','っも'],
+  ['yya','っや'],['yyu','っゆ'],['yyo','っよ'],
+  ['wwa','っわ'],
+  ['dda','っだ'],['ddi','っぢ'],['ddu','っづ'],['dde','っで'],['ddo','っど'],
+  ['bba','っば'],['bbi','っび'],['bbu','っぶ'],['bbe','っべ'],['bbo','っぼ'],
+  ['gga','っが'],['ggi','っぎ'],['ggu','っぐ'],['gge','っげ'],['ggo','っご'],
+  ['zza','っざ'],['zzi','っじ'],['zzu','っず'],['zze','っぜ'],['zzo','っぞ'],
+  ['kya','きゃ'],['kyu','きゅ'],['kyo','きょ'],
+  ['gya','ぎゃ'],['gyu','ぎゅ'],['gyo','ぎょ'],
+  ['sya','しゃ'],['syu','しゅ'],['syo','しょ'],
+  ['zya','じゃ'],['zyu','じゅ'],['zyo','じょ'],
+  ['jya','じゃ'],['jyu','じゅ'],['jyo','じょ'],
+  ['tya','ちゃ'],['tyu','ちゅ'],['tyo','ちょ'],
+  ['dya','ぢゃ'],['dyu','ぢゅ'],['dyo','ぢょ'],
+  ['nya','にゃ'],['nyu','にゅ'],['nyo','にょ'],
+  ['hya','ひゃ'],['hyu','ひゅ'],['hyo','ひょ'],
+  ['bya','びゃ'],['byu','びゅ'],['byo','びょ'],
+  ['pya','ぴゃ'],['pyu','ぴゅ'],['pyo','ぴょ'],
+  ['mya','みゃ'],['myu','みゅ'],['myo','みょ'],
+  ['rya','りゃ'],['ryu','りゅ'],['ryo','りょ'],
+  ['wyi','ゐ'],['wye','ゑ'],
+  ['ja','じゃ'],['ji','じ'],['ju','じゅ'],['je','じぇ'],['jo','じょ'],
+  ['fa','ふぁ'],['fi','ふぃ'],['fu','ふ'],['fe','ふぇ'],['fo','ふぉ'],
+  ['ti','ち'],['tu','つ'],['di','ぢ'],['du','づ'],['si','し'],
+  ['xa','ぁ'],['xi','ぃ'],['xu','ぅ'],['xe','ぇ'],['xo','ぉ'],
+  ['xya','ゃ'],['xyu','ゅ'],['xyo','ょ'],
+  ['xtu','っ'],['xka','ヵ'],['xke','ヶ'],
+  ['nn','ん'],['n\'','ん'],
+  ['a','あ'],['i','い'],['u','う'],['e','え'],['o','お'],
+  ['ka','か'],['ki','き'],['ku','く'],['ke','け'],['ko','こ'],
+  ['sa','さ'],['su','す'],['se','せ'],['so','そ'],
+  ['ta','た'],['te','て'],['to','と'],
+  ['na','な'],['ni','に'],['nu','ぬ'],['ne','ね'],['no','の'],
+  ['ha','は'],['hi','ひ'],['he','へ'],['ho','ほ'],['hu','ふ'],
+  ['ma','ま'],['mi','み'],['mu','む'],['me','め'],['mo','も'],
+  ['ya','や'],['yu','ゆ'],['yo','よ'],
+  ['ra','ら'],['ri','り'],['ru','る'],['re','れ'],['ro','ろ'],
+  ['wa','わ'],['wi','ゐ'],['we','ゑ'],['wo','を'],
+  ['ga','が'],['gi','ぎ'],['gu','ぐ'],['ge','げ'],['go','ご'],
+  ['za','ざ'],['zi','じ'],['zu','ず'],['ze','ぜ'],['zo','ぞ'],
+  ['da','だ'],['de','で'],['do','ど'],
+  ['ba','ば'],['bi','び'],['bu','ぶ'],['be','べ'],['bo','ぼ'],
+  ['pa','ぱ'],['pi','ぴ'],['pu','ぷ'],['pe','ぺ'],['po','ぽ'],
+  ['n','ん'],// single n — must be last
+];
+
+// Convert romaji buffer to hiragana (greedy longest match)
+function romajiToHiragana(buf) {
+  let result = '';
+  let i = 0;
+  while (i < buf.length) {
+    let matched = false;
+    for (const [r, h] of ROMAJI_TABLE) {
+      if (buf.startsWith(r, i)) {
+        result += h;
+        i += r.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      result += buf[i];
+      i++;
+    }
+  }
+  return result;
+}
+
+// Convert hiragana → katakana
+function toKatakana(str) {
+  return str.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+
+/* =====================================================
+   VOCABULARY DATA
+   ===================================================== */
+
+// Hiragana 50-on (grade 1)
+const DATA_HIRAGANA_1 = [
+  {q:'あ',r:'a'},{q:'い',r:'i'},{q:'う',r:'u'},{q:'え',r:'e'},{q:'お',r:'o'},
+  {q:'か',r:'ka'},{q:'き',r:'ki'},{q:'く',r:'ku'},{q:'け',r:'ke'},{q:'こ',r:'ko'},
+  {q:'さ',r:'sa'},{q:'し',r:'si'},{q:'す',r:'su'},{q:'せ',r:'se'},{q:'そ',r:'so'},
+  {q:'た',r:'ta'},{q:'ち',r:'ti'},{q:'つ',r:'tu'},{q:'て',r:'te'},{q:'と',r:'to'},
+  {q:'な',r:'na'},{q:'に',r:'ni'},{q:'ぬ',r:'nu'},{q:'ね',r:'ne'},{q:'の',r:'no'},
+  {q:'は',r:'ha'},{q:'ひ',r:'hi'},{q:'ふ',r:'hu'},{q:'へ',r:'he'},{q:'ほ',r:'ho'},
+  {q:'ま',r:'ma'},{q:'み',r:'mi'},{q:'む',r:'mu'},{q:'め',r:'me'},{q:'も',r:'mo'},
+  {q:'や',r:'ya'},{q:'ゆ',r:'yu'},{q:'よ',r:'yo'},
+  {q:'ら',r:'ra'},{q:'り',r:'ri'},{q:'る',r:'ru'},{q:'れ',r:'re'},{q:'ろ',r:'ro'},
+  {q:'わ',r:'wa'},{q:'を',r:'wo'},{q:'ん',r:'nn'},
+  {q:'が',r:'ga'},{q:'ぎ',r:'gi'},{q:'ぐ',r:'gu'},{q:'げ',r:'ge'},{q:'ご',r:'go'},
+  {q:'ざ',r:'za'},{q:'じ',r:'zi'},{q:'ず',r:'zu'},{q:'ぜ',r:'ze'},{q:'ぞ',r:'zo'},
+  {q:'だ',r:'da'},{q:'で',r:'de'},{q:'ど',r:'do'},
+  {q:'ば',r:'ba'},{q:'び',r:'bi'},{q:'ぶ',r:'bu'},{q:'べ',r:'be'},{q:'ぼ',r:'bo'},
+  {q:'ぱ',r:'pa'},{q:'ぴ',r:'pi'},{q:'ぷ',r:'pu'},{q:'ぺ',r:'pe'},{q:'ぽ',r:'po'},
+];
+
+// Grade 4 hiragana — compound kana (youon)
+const DATA_HIRAGANA_4 = [
+  {q:'きゃ',r:'kya'},{q:'きゅ',r:'kyu'},{q:'きょ',r:'kyo'},
+  {q:'しゃ',r:'sha'},{q:'しゅ',r:'shu'},{q:'しょ',r:'sho'},
+  {q:'ちゃ',r:'cha'},{q:'ちゅ',r:'chu'},{q:'ちょ',r:'cho'},
+  {q:'にゃ',r:'nya'},{q:'にゅ',r:'nyu'},{q:'にょ',r:'nyo'},
+  {q:'ひゃ',r:'hya'},{q:'ひゅ',r:'hyu'},{q:'ひょ',r:'hyo'},
+  {q:'みゃ',r:'mya'},{q:'みゅ',r:'myu'},{q:'みょ',r:'myo'},
+  {q:'りゃ',r:'rya'},{q:'りゅ',r:'ryu'},{q:'りょ',r:'ryo'},
+  {q:'ぎゃ',r:'gya'},{q:'ぎゅ',r:'gyu'},{q:'ぎょ',r:'gyo'},
+  {q:'じゃ',r:'jya'},{q:'じゅ',r:'jyu'},{q:'じょ',r:'jyo'},
+  {q:'びゃ',r:'bya'},{q:'びゅ',r:'byu'},{q:'びょ',r:'byo'},
+  {q:'ぴゃ',r:'pya'},{q:'ぴゅ',r:'pyu'},{q:'ぴょ',r:'pyo'},
+  ...DATA_HIRAGANA_1, // includes all basic kana
+];
+
+// Katakana (same structure)
+function hiraganaDataToKatakana(data) {
+  return data.map(d => ({ q: toKatakana(d.q), r: d.r, ruby: d.q }));
+}
+
+const DATA_KATAKANA_1 = hiraganaDataToKatakana(DATA_HIRAGANA_1);
+const DATA_KATAKANA_4 = hiraganaDataToKatakana(DATA_HIRAGANA_4);
+
+// Kanji — grade 1 (漢検10/9級相当, 80字)
+const DATA_KANJI_1 = [
+  {q:'一',ruby:'いち',r:'ichi'},{q:'二',ruby:'に',r:'ni'},{q:'三',ruby:'さん',r:'san'},
+  {q:'四',ruby:'し',r:'si'},{q:'五',ruby:'ご',r:'go'},{q:'六',ruby:'ろく',r:'roku'},
+  {q:'七',ruby:'しち',r:'siti'},{q:'八',ruby:'はち',r:'hati'},{q:'九',ruby:'く',r:'ku'},
+  {q:'十',ruby:'じゅう',r:'jyuu'},{q:'百',ruby:'ひゃく',r:'hyaku'},{q:'千',ruby:'せん',r:'sen'},
+  {q:'円',ruby:'えん',r:'enn'},{q:'年',ruby:'ねん',r:'nenn'},{q:'月',ruby:'つき',r:'tuki'},
+  {q:'日',ruby:'にち',r:'niti'},{q:'火',ruby:'ひ',r:'hi'},{q:'水',ruby:'みず',r:'mizu'},
+  {q:'木',ruby:'き',r:'ki'},{q:'金',ruby:'きん',r:'kinn'},{q:'土',ruby:'つち',r:'tuti'},
+  {q:'山',ruby:'やま',r:'yama'},{q:'川',ruby:'かわ',r:'kawa'},{q:'田',ruby:'た',r:'ta'},
+  {q:'空',ruby:'そら',r:'sora'},{q:'海',ruby:'うみ',r:'umi'},{q:'森',ruby:'もり',r:'mori'},
+  {q:'花',ruby:'はな',r:'hana'},{q:'草',ruby:'くさ',r:'kusa'},{q:'竹',ruby:'たけ',r:'take'},
+  {q:'犬',ruby:'いぬ',r:'inu'},{q:'猫',ruby:'ねこ',r:'neko'},{q:'魚',ruby:'さかな',r:'sakana'},
+  {q:'鳥',ruby:'とり',r:'tori'},{q:'虫',ruby:'むし',r:'musi'},{q:'貝',ruby:'かい',r:'kai'},
+  {q:'目',ruby:'め',r:'me'},{q:'耳',ruby:'みみ',r:'mimi'},{q:'口',ruby:'くち',r:'kuti'},
+  {q:'手',ruby:'て',r:'te'},{q:'足',ruby:'あし',r:'asi'},{q:'力',ruby:'ちから',r:'tikara'},
+  {q:'大',ruby:'おお',r:'oo'},{q:'小',ruby:'ちい',r:'tii'},{q:'中',ruby:'なか',r:'naka'},
+  {q:'上',ruby:'うえ',r:'ue'},{q:'下',ruby:'した',r:'sita'},{q:'右',ruby:'みぎ',r:'migi'},
+  {q:'左',ruby:'ひだり',r:'hidari'},{q:'男',ruby:'おとこ',r:'otoko'},{q:'女',ruby:'おんな',r:'onna'},
+  {q:'子',ruby:'こ',r:'ko'},{q:'父',ruby:'ちち',r:'titi'},{q:'母',ruby:'はは',r:'haha'},
+  {q:'先',ruby:'せん',r:'senn'},{q:'生',ruby:'せい',r:'sei'},{q:'学',ruby:'がく',r:'gaku'},
+  {q:'校',ruby:'こう',r:'kou'},{q:'文',ruby:'もん',r:'monn'},{q:'字',ruby:'じ',r:'zi'},
+  {q:'本',ruby:'ほん',r:'honn'},{q:'名',ruby:'な',r:'na'},{q:'気',ruby:'き',r:'ki'},
+  {q:'玉',ruby:'たま',r:'tama'},{q:'王',ruby:'おう',r:'ou'},{q:'糸',ruby:'いと',r:'ito'},
+  {q:'町',ruby:'まち',r:'mati'},{q:'村',ruby:'むら',r:'mura'},{q:'林',ruby:'はやし',r:'hayasi'},
+  {q:'雨',ruby:'あめ',r:'ame'},{q:'天',ruby:'てん',r:'tenn'},{q:'白',ruby:'しろ',r:'siro'},
+  {q:'青',ruby:'あお',r:'ao'},{q:'赤',ruby:'あか',r:'aka'},{q:'正',ruby:'ただ',r:'tada'},
+  {q:'立',ruby:'た',r:'ta'},{q:'休',ruby:'やす',r:'yasu'},{q:'出',ruby:'で',r:'de'},
+  {q:'入',ruby:'い',r:'i'},{q:'見',ruby:'み',r:'mi'},{q:'書',ruby:'か',r:'ka'},
+];
+
+// Kanji — grade 4 (漢検7/6級相当)
+const DATA_KANJI_4 = [
+  {q:'愛',ruby:'あい',r:'ai'},{q:'案',ruby:'あん',r:'ann'},{q:'以',ruby:'い',r:'i'},
+  {q:'意',ruby:'い',r:'i'},{q:'育',ruby:'そだ',r:'soda'},{q:'員',ruby:'いん',r:'inn'},
+  {q:'院',ruby:'いん',r:'inn'},{q:'運',ruby:'うん',r:'unn'},{q:'栄',ruby:'さか',r:'saka'},
+  {q:'英',ruby:'えい',r:'ei'},{q:'塩',ruby:'しお',r:'sio'},{q:'億',ruby:'おく',r:'oku'},
+  {q:'加',ruby:'か',r:'ka'},{q:'果',ruby:'か',r:'ka'},{q:'課',ruby:'か',r:'ka'},
+  {q:'貨',ruby:'か',r:'ka'},{q:'改',ruby:'かい',r:'kai'},{q:'械',ruby:'かい',r:'kai'},
+  {q:'各',ruby:'かく',r:'kaku'},{q:'覚',ruby:'おぼ',r:'obo'},{q:'完',ruby:'かん',r:'kann'},
+  {q:'官',ruby:'かん',r:'kann'},{q:'管',ruby:'かん',r:'kann'},{q:'観',ruby:'かん',r:'kann'},
+  {q:'関',ruby:'かん',r:'kann'},{q:'希',ruby:'き',r:'ki'},{q:'季',ruby:'き',r:'ki'},
+  {q:'旗',ruby:'はた',r:'hata'},{q:'機',ruby:'き',r:'ki'},{q:'議',ruby:'ぎ',r:'gi'},
+  {q:'求',ruby:'もと',r:'moto'},{q:'競',ruby:'きそ',r:'kiso'},{q:'共',ruby:'とも',r:'tomo'},
+  {q:'協',ruby:'きょう',r:'kyou'},{q:'競',ruby:'きょう',r:'kyou'},{q:'極',ruby:'きわ',r:'kiwa'},
+  {q:'訓',ruby:'くん',r:'kunn'},{q:'軍',ruby:'ぐん',r:'gunn'},{q:'型',ruby:'かた',r:'kata'},
+  {q:'景',ruby:'けい',r:'kei'},{q:'芸',ruby:'げい',r:'gei'},{q:'結',ruby:'むす',r:'musu'},
+  {q:'建',ruby:'た',r:'ta'},{q:'健',ruby:'けん',r:'kenn'},{q:'験',ruby:'けん',r:'kenn'},
+  {q:'固',ruby:'かた',r:'kata'},{q:'功',ruby:'こう',r:'kou'},{q:'好',ruby:'す',r:'su'},
+  {q:'康',ruby:'こう',r:'kou'},{q:'航',ruby:'こう',r:'kou'},{q:'告',ruby:'つ',r:'tu'},
+  {q:'差',ruby:'さ',r:'sa'},{q:'最',ruby:'もっと',r:'moto'},{q:'材',ruby:'ざい',r:'zai'},
+  {q:'察',ruby:'さつ',r:'satu'},{q:'産',ruby:'う',r:'u'},{q:'散',ruby:'ちる',r:'tiru'},
+  {q:'残',ruby:'のこ',r:'noko'},{q:'士',ruby:'し',r:'si'},{q:'司',ruby:'し',r:'si'},
+  {q:'史',ruby:'し',r:'si'},{q:'試',ruby:'こころ',r:'kokoro'},{q:'治',ruby:'なお',r:'nao'},
+  {q:'辞',ruby:'じ',r:'zi'},{q:'借',ruby:'か',r:'ka'},{q:'種',ruby:'たね',r:'tane'},
+  {q:'周',ruby:'まわ',r:'mawa'},{q:'祝',ruby:'いわ',r:'iwa'},{q:'順',ruby:'じゅん',r:'jyunn'},
+  {q:'初',ruby:'はじ',r:'hazi'},{q:'松',ruby:'まつ',r:'matu'},{q:'笑',ruby:'わら',r:'wara'},
+  {q:'唱',ruby:'うた',r:'uta'},{q:'焼',ruby:'や',r:'ya'},{q:'象',ruby:'ぞう',r:'zou'},
+  {q:'信',ruby:'しん',r:'sinn'},{q:'臣',ruby:'しん',r:'sinn'},{q:'成',ruby:'なる',r:'naru'},
+  {q:'清',ruby:'きよ',r:'kiyo'},{q:'積',ruby:'つ',r:'tu'},{q:'折',ruby:'お',r:'o'},
+  {q:'節',ruby:'ふし',r:'husi'},{q:'戦',ruby:'いくさ',r:'ikusa'},{q:'選',ruby:'えら',r:'era'},
+  {q:'浅',ruby:'あさ',r:'asa'},{q:'争',ruby:'あらそ',r:'araso'},{q:'倉',ruby:'くら',r:'kura'},
+  {q:'巣',ruby:'す',r:'su'},{q:'束',ruby:'つか',r:'tuka'},{q:'側',ruby:'がわ',r:'gawa'},
+  {q:'続',ruby:'つづ',r:'tuzu'},{q:'卒',ruby:'そつ',r:'sotu'},{q:'孫',ruby:'まご',r:'mago'},
+  {q:'帯',ruby:'おび',r:'obi'},{q:'達',ruby:'たち',r:'tati'},{q:'単',ruby:'たん',r:'tann'},
+  {q:'仲',ruby:'なか',r:'naka'},{q:'貯',ruby:'た',r:'ta'},{q:'兆',ruby:'ちょう',r:'tyou'},
+  {q:'徒',ruby:'と',r:'to'},{q:'特',ruby:'とく',r:'toku'},{q:'努',ruby:'つと',r:'tuto'},
+];
+
+/* =====================================================
+   STATE
+   ===================================================== */
+let mode = null; // 'free' | 'game'
+let freeRomajiBuffer = '';
+let freeJapanese = '';
+
+let gameType = 'hiragana'; // hiragana|katakana|kanji1|kanji4
+let gameLevel = 1;
+let gameQueue = [];
+let gameIndex = 0;
+let gameTotal = 10;
+let gameScore = 0;
+let gameCorrect = 0;
+let gameCombo = 0;
+let currentAnswer = ''; // romaji to type
+let typedSoFar = '';
+let shiftActive = false;
+
+/* =====================================================
+   KEYBOARD LAYOUT (QWERTY laptop style)
+   ===================================================== */
+// Each key: [label, keyValue, widthRatio, subLabel]
+// widthRatio is relative to base key width
+const KB_ROWS = [
+  [
+    ['`','`',1],['1','1',1],['2','2',1],['3','3',1],['4','4',1],['5','5',1],
+    ['6','6',1],['7','7',1],['8','8',1],['9','9',1],['0','0',1],['-','-',1],
+    ['=','=',1],['⌫','Backspace',2],
+  ],
+  [
+    ['Tab','Tab',1.5],['Q','q',1],['W','w',1],['E','e',1],['R','r',1],['T','t',1],
+    ['Y','y',1],['U','u',1],['I','i',1],['O','o',1],['P','p',1],['[','[',1],[']',']',1],
+    ['¥','\\',1.5],
+  ],
+  [
+    ['英数','CapsLock',1.8],['A','a',1],['S','s',1],['D','d',1],['F','f',1],['G','g',1],
+    ['H','h',1],['J','j',1],['K','k',1],['L','l',1],[';',';',1],[':',':',1],
+    ['Enter','Enter',2],
+  ],
+  [
+    ['Shift','ShiftLeft',2.5],['Z','z',1],['X','x',1],['C','c',1],['V','v',1],['B','b',1],
+    ['N','n',1],['M','m',1],[',',',',1],['.','.',1],['/','/',1],['Shift','ShiftRight',2.5],
+  ],
+  [
+    ['Space',' ',8],
+  ],
+];
+
+function buildKeyboard() {
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+
+  // Calculate base key size from viewport
+  const vw = Math.min(window.innerWidth, 900);
+  const totalUnits = 14; // max row units
+  const gap = 4;
+  const padding = 12;
+  const baseW = Math.floor((vw - padding * 2 - gap * (totalUnits - 1)) / totalUnits);
+  const keyH = Math.max(38, Math.min(48, Math.floor(baseW * 1.1)));
+
+  KB_ROWS.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+
+    row.forEach(([label, val, ratio]) => {
+      const key = document.createElement('div');
+      key.className = 'kb-key';
+      const isSpecial = ['Backspace','Tab','CapsLock','Enter','ShiftLeft','ShiftRight'].includes(val);
+      if (isSpecial) key.classList.add('key-special');
+      if (val === ' ') key.classList.add('key-space');
+
+      const w = Math.floor(baseW * ratio + gap * (ratio - 1));
+      key.style.width  = w + 'px';
+      key.style.height = keyH + 'px';
+      key.style.minWidth = w + 'px';
+      key.dataset.key = val;
+
+      // Label
+      const mainSpan = document.createElement('span');
+      mainSpan.className = 'key-main';
+      mainSpan.textContent = label === 'Space' ? '' : label;
+      key.appendChild(mainSpan);
+
+      // Hiragana sub-label for alphabetic keys
+      if (/^[a-z]$/.test(val)) {
+        const sub = hiraganaHint(val);
+        if (sub) {
+          const subSpan = document.createElement('span');
+          subSpan.className = 'key-sub';
+          subSpan.textContent = sub;
+          key.appendChild(subSpan);
+        }
+      }
+
+      // Touch events
+      key.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        handleKeyPress(val);
+        key.classList.add('pressed');
+      });
+      key.addEventListener('pointerup', () => key.classList.remove('pressed'));
+      key.addEventListener('pointerleave', () => key.classList.remove('pressed'));
+
+      rowEl.appendChild(key);
+    });
+
+    kb.appendChild(rowEl);
+  });
+}
+
+// Hiragana hints for single letter keys
+function hiraganaHint(k) {
+  const map = {
+    a:'あ',i:'い',u:'う',e:'え',o:'お',
+    k:'か行',s:'さ行',t:'た行',n:'な行',h:'は行',
+    m:'ま行',y:'や行',r:'ら行',w:'わ行',
+    g:'が行',z:'ざ行',d:'だ行',b:'ば行',p:'ぱ行',
+    f:'ふ',j:'じ',v:'ゔ',
+  };
+  return map[k] || '';
+}
+
+/* =====================================================
+   PHYSICAL KEYBOARD
+   ===================================================== */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Shift') { shiftActive = true; return; }
+  if (e.key === 'CapsLock') return;
+
+  let val = e.key;
+  if (val === 'Enter') val = 'Enter';
+  else if (val === 'Backspace') val = 'Backspace';
+  else if (val.length === 1) {
+    val = shiftActive ? e.key.toUpperCase() : e.key.toLowerCase();
+  } else return;
+
+  handleKeyPress(val);
+
+  // Highlight key on screen
+  const keyEl = document.querySelector(`.kb-key[data-key="${CSS.escape(e.key.toLowerCase())}"]`)
+               || document.querySelector(`.kb-key[data-key="${CSS.escape(e.key)}"]`);
+  if (keyEl) {
+    keyEl.classList.add('pressed');
+    setTimeout(() => keyEl.classList.remove('pressed'), 120);
+  }
+});
+
+document.addEventListener('keyup', e => {
+  if (e.key === 'Shift') shiftActive = false;
+});
+
+/* =====================================================
+   KEY PRESS HANDLER
+   ===================================================== */
+function handleKeyPress(val) {
+  if (mode === 'free') {
+    handleFreeKey(val);
+  } else if (mode === 'game') {
+    handleGameKey(val);
+  }
+}
+
+/* =====================================================
+   FREE MODE
+   ===================================================== */
+function startFreeMode() {
+  hideAllOverlays();
+  mode = 'free';
+  showTab('free');
+  freeRomajiBuffer = '';
+  freeJapanese = '';
+  updateFreeDisplay();
+  focusHiddenInput();
+}
+
+function clearFreeInput() {
+  freeRomajiBuffer = '';
+  freeJapanese = '';
+  updateFreeDisplay();
+}
+
+function handleFreeKey(val) {
+  if (val === 'Backspace') {
+    if (freeRomajiBuffer.length > 0) {
+      freeRomajiBuffer = freeRomajiBuffer.slice(0, -1);
+    } else if (freeJapanese.length > 0) {
+      freeJapanese = freeJapanese.slice(0, -1);
+    }
+    updateFreeDisplay();
+    return;
+  }
+  if (val === 'Enter') {
+    // commit current buffer
+    if (freeRomajiBuffer.length > 0) {
+      freeJapanese += romajiToHiragana(freeRomajiBuffer);
+      freeRomajiBuffer = '';
+      updateFreeDisplay();
+    }
+    return;
+  }
+  if (val === ' ') {
+    freeJapanese += romajiToHiragana(freeRomajiBuffer) + '\u3000';
+    freeRomajiBuffer = '';
+    updateFreeDisplay();
+    return;
+  }
+  if (!/^[a-zA-Z0-9\-'.,;:/\\[\]=`]$/.test(val)) return;
+
+  val = val.toLowerCase();
+  freeRomajiBuffer += val;
+
+  // Try to convert as much of the buffer as possible
+  const converted = tryConvert(freeRomajiBuffer);
+  freeJapanese += converted.done;
+  freeRomajiBuffer = converted.remaining;
+
+  updateFreeDisplay();
+}
+
+// Greedy convert: returns {done, remaining}
+function tryConvert(buf) {
+  let done = '';
+  let i = 0;
+  while (i < buf.length) {
+    let matched = false;
+    // Try longest match at position i
+    for (const [r, h] of ROMAJI_TABLE) {
+      if (buf.startsWith(r, i)) {
+        done += h;
+        i += r.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      // Check if remaining could be a prefix of any rule
+      const rest = buf.slice(i);
+      const couldExtend = ROMAJI_TABLE.some(([r]) => r.startsWith(rest));
+      if (couldExtend) {
+        // Wait for more input
+        return { done, remaining: rest };
+      }
+      // Not a valid prefix either — output as-is
+      done += rest[0];
+      i++;
+    }
+  }
+  return { done, remaining: '' };
+}
+
+function updateFreeDisplay() {
+  const jpEl = document.getElementById('free-japanese');
+  const rmEl = document.getElementById('free-roman');
+  jpEl.textContent = freeJapanese + romajiToHiragana(freeRomajiBuffer) || '\u3000';
+  rmEl.textContent = freeRomajiBuffer ? `[${freeRomajiBuffer}]` : '';
+}
+
+/* =====================================================
+   GAME MODE SETUP
+   ===================================================== */
+function showStartScreen() {
+  document.getElementById('start-screen').classList.remove('hidden');
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.add('hidden');
+  mode = null;
+}
+
+function showGameSetup() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('setup-screen').classList.remove('hidden');
+}
+
+function hideAllOverlays() {
+  ['start-screen','setup-screen','result-screen'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+}
+
+function selectType(t) {
+  gameType = t;
+  ['hiragana','katakana','kanji1','kanji4'].forEach(id => {
+    document.getElementById('type-'+id).classList.remove('selected');
+  });
+  document.getElementById('type-'+t).classList.add('selected');
+
+  // Level buttons: kanji4 only available on 4nen setting
+  if (t === 'kanji4') {
+    selectLevel(4);
+    document.getElementById('lvl-1').disabled = true;
+    document.getElementById('lvl-1').style.opacity = '0.3';
+  } else {
+    document.getElementById('lvl-1').disabled = false;
+    document.getElementById('lvl-1').style.opacity = '';
+  }
+}
+
+function selectLevel(l) {
+  gameLevel = l;
+  document.getElementById('lvl-1').classList.toggle('selected', l === 1);
+  document.getElementById('lvl-4').classList.toggle('selected', l === 4);
+}
+
+function getDataset() {
+  if (gameType === 'hiragana') return gameLevel === 1 ? DATA_HIRAGANA_1 : DATA_HIRAGANA_4;
+  if (gameType === 'katakana') return gameLevel === 1 ? DATA_KATAKANA_1 : DATA_KATAKANA_4;
+  if (gameType === 'kanji1')  return DATA_KANJI_1;
+  if (gameType === 'kanji4')  return DATA_KANJI_4;
+  return DATA_HIRAGANA_1;
+}
+
+function startGameMode() {
+  hideAllOverlays();
+  mode = 'game';
+  showTab('game');
+
+  const dataset = getDataset();
+  const shuffled = [...dataset].sort(() => Math.random() - 0.5);
+  gameQueue = shuffled.slice(0, gameTotal);
+  gameIndex = 0;
+  gameScore = 0;
+  gameCorrect = 0;
+  gameCombo = 0;
+  typedSoFar = '';
+
+  document.getElementById('q-total').textContent = gameTotal;
+  updateStats();
+  loadQuestion();
+  focusHiddenInput();
+}
+
+function retryGame() {
+  document.getElementById('result-screen').classList.add('hidden');
+  startGameMode();
+}
+
+function loadQuestion() {
+  if (gameIndex >= gameQueue.length) {
+    showResult();
+    return;
+  }
+  const item = gameQueue[gameIndex];
+  currentAnswer = item.r;
+  typedSoFar = '';
+
+  document.getElementById('question-char').textContent = item.q;
+  document.getElementById('question-ruby').textContent = item.ruby || '';
+  document.getElementById('q-num').textContent = gameIndex + 1;
+
+  renderAnswerSlots();
+}
+
+function renderAnswerSlots() {
+  const container = document.getElementById('answer-display');
+  container.innerHTML = '';
+  for (let i = 0; i < currentAnswer.length; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'answer-char' + (i === typedSoFar.length ? ' current' : '');
+    if (i < typedSoFar.length) {
+      slot.classList.add('typed');
+      slot.textContent = currentAnswer[i];
+    }
+    container.appendChild(slot);
+  }
+}
+
+function handleGameKey(val) {
+  if (val === 'Backspace') {
+    if (typedSoFar.length > 0) typedSoFar = typedSoFar.slice(0, -1);
+    renderAnswerSlots();
+    return;
+  }
+  if (!/^[a-zA-Z0-9\-';,./]$/.test(val)) return;
+  val = val.toLowerCase();
+
+  const expected = currentAnswer[typedSoFar.length];
+  if (val === expected) {
+    typedSoFar += val;
+    renderAnswerSlots();
+
+    if (typedSoFar === currentAnswer) {
+      // Correct!
+      gameCorrect++;
+      gameCombo++;
+      const comboBonus = Math.min(gameCombo, 5) * 10;
+      gameScore += 100 + comboBonus;
+      updateStats();
+      showFlash('正解！', 'correct');
+      updateCombo();
+      setTimeout(() => {
+        gameIndex++;
+        loadQuestion();
+      }, 600);
+    }
+  } else {
+    // Wrong key
+    gameCombo = 0;
+    updateCombo();
+    renderAnswerSlots();
+    // Flash wrong on slots
+    const slots = document.querySelectorAll('#answer-display .answer-char');
+    const idx = typedSoFar.length;
+    if (slots[idx]) {
+      slots[idx].classList.add('wrong');
+      slots[idx].textContent = val;
+      setTimeout(() => {
+        slots[idx].classList.remove('wrong');
+        slots[idx].textContent = '';
+        renderAnswerSlots();
+      }, 400);
+    }
+    showFlash('ちがう', 'wrong');
+  }
+}
+
+function updateStats() {
+  document.getElementById('score-val').textContent = gameScore;
+  document.getElementById('correct-val').textContent = gameCorrect;
+}
+
+function updateCombo() {
+  const el = document.getElementById('combo-badge');
+  if (gameCombo >= 3) {
+    el.textContent = `🔥 ${gameCombo} COMBO!`;
+  } else {
+    el.textContent = '';
+  }
+}
+
+function showFlash(text, cls) {
+  const el = document.getElementById('result-flash');
+  el.textContent = text;
+  el.className = 'result-flash ' + cls;
+  // Re-trigger animation
+  void el.offsetWidth;
+  el.className = 'result-flash ' + cls;
+}
+
+function showResult() {
+  mode = null;
+  const accuracy = gameQueue.length > 0 ? Math.round(gameCorrect / gameQueue.length * 100) : 0;
+  document.getElementById('final-score').textContent = gameScore;
+  document.getElementById('final-stats').textContent =
+    `せいかいりつ ${accuracy}%　（${gameCorrect} / ${gameQueue.length}）`;
+  document.getElementById('result-screen').classList.remove('hidden');
+}
+
+/* =====================================================
+   TAB SWITCHING
+   ===================================================== */
+function showTab(tab) {
+  document.getElementById('free-section').classList.toggle('hidden', tab !== 'free');
+  document.getElementById('game-section').classList.toggle('hidden', tab !== 'game');
+  document.getElementById('tab-free').classList.toggle('active', tab === 'free');
+  document.getElementById('tab-game').classList.toggle('active', tab === 'game');
+}
+
+function switchTab(tab) {
+  if (tab === 'free') {
+    startFreeMode();
+  } else {
+    showGameSetup();
+    document.getElementById('start-screen').classList.add('hidden');
+  }
+}
+
+/* =====================================================
+   FOCUS MANAGEMENT
+   ===================================================== */
+function focusHiddenInput() {
+  document.getElementById('hidden-input').focus({ preventScroll: true });
+}
+
+// Keep focus on hidden input so physical keyboard works
+document.addEventListener('click', () => {
+  if (mode !== null) focusHiddenInput();
+});
+
+/* =====================================================
+   INIT
+   ===================================================== */
+window.addEventListener('load', () => {
+  buildKeyboard();
+});
+
+window.addEventListener('resize', () => {
+  buildKeyboard();
+});
+</script>
+</body>
+</html>

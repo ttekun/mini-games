@@ -103,17 +103,92 @@
 
     .game-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 18px;
       padding: 0 10px;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
+      .game-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+    }
+
+    @media (max-width: 380px) {
       .game-grid {
         grid-template-columns: 1fr;
         gap: 14px;
       }
       h1 { font-size: 2rem; }
+    }
+
+    /* Typing card — yellow/orange accent */
+    .game-card.typing {
+      background: linear-gradient(145deg, rgba(255,228,77,0.18) 0%, rgba(255,159,67,0.10) 100%);
+      border: 2px solid rgba(255,228,77,0.35);
+      box-shadow: 0 4px 24px rgba(255,228,77,0.2);
+    }
+
+    .game-card.typing:hover {
+      box-shadow: 0 8px 36px rgba(255,228,77,0.45), 0 0 60px rgba(255,159,67,0.15);
+      border-color: var(--pop-yellow);
+    }
+
+    .game-card.typing .card-title {
+      background: linear-gradient(135deg, var(--pop-yellow), var(--pop-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 8px rgba(255,228,77,0.4));
+    }
+
+    .game-card.typing .card-badge {
+      background: rgba(255,228,77,0.15);
+      border: 1px solid rgba(255,228,77,0.4);
+      color: var(--pop-yellow);
+    }
+
+    /* Typing key icon */
+    .typing-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 0 auto 14px;
+      width: fit-content;
+      animation: iconBob 2.5s ease-in-out 0.8s infinite alternate;
+    }
+
+    .typing-keys-row {
+      display: flex;
+      gap: 3px;
+    }
+
+    .t-key {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      background: rgba(255,228,77,0.25);
+      border: 1px solid rgba(255,228,77,0.5);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 0 6px rgba(255,228,77,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.45rem;
+      color: rgba(255,228,77,0.9);
+      font-weight: 700;
+    }
+
+    .t-key.wide {
+      width: 48px;
+    }
+
+    .t-key.accent {
+      background: rgba(255,159,67,0.35);
+      border-color: var(--pop-orange);
+      color: var(--pop-orange);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 0 8px rgba(255,159,67,0.5);
     }
 
     .game-card {
@@ -418,6 +493,34 @@
           </div>
           <div class="card-title">NEON//BEAT</div>
           <div class="card-desc">リズムタップゲーム</div>
+          <div class="card-badge">小学生1〜4</div>
+        </div>
+      </a>
+
+      <a href="games/typing/index.html" class="game-card typing">
+        <div class="card-content">
+          <!-- Typing icon: mini keyboard rows -->
+          <div class="typing-icon">
+            <div class="typing-keys-row">
+              <div class="t-key accent">Q</div>
+              <div class="t-key">W</div>
+              <div class="t-key accent">E</div>
+              <div class="t-key">R</div>
+              <div class="t-key">T</div>
+            </div>
+            <div class="typing-keys-row">
+              <div class="t-key">A</div>
+              <div class="t-key accent">S</div>
+              <div class="t-key">D</div>
+              <div class="t-key accent">F</div>
+              <div class="t-key">G</div>
+            </div>
+            <div class="typing-keys-row">
+              <div class="t-key wide accent">スペース</div>
+            </div>
+          </div>
+          <div class="card-title">タイピング</div>
+          <div class="card-desc">もじタイピング練習</div>
           <div class="card-badge">小学生1〜4</div>
         </div>
       </a>
