@@ -1035,6 +1035,7 @@ function bgmSchedulePhrase(phraseStart) {
 }
 
 function startBGM(level) {
+  if (!bgmEnabled) return;
   stopBGM();
   initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
