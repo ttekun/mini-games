@@ -536,9 +536,8 @@
     <div class="subtitle">// RHYTHM SYSTEM v2.0 //</div>
     <p>ノートが判定ラインに来たらタップ<br>タイミングよくヒットしてスコアを稼げ</p>
     <div class="diff-btns">
-      <button type="button" class="diff-btn active" data-diff="easy">EASY</button>
-      <button type="button" class="diff-btn" data-diff="normal">NORMAL</button>
-      <button type="button" class="diff-btn" data-diff="hard">HARD</button>
+      <button type="button" class="diff-btn active" data-diff="sho1">小学生1</button>
+      <button type="button" class="diff-btn" data-diff="sho4">小学生4</button>
     </div>
     <button type="button" class="btn-primary" id="start-btn">
       <span class="btn-primary-inner">JACK IN</span>
@@ -596,9 +595,11 @@ const TIMING = {
 };
 
 const DIFFICULTY = {
-  easy:   { bpm: 50,  density: 0.3, speed: 200 },
-  normal: { bpm: 70,  density: 0.4, speed: 280 },
-  hard:   { bpm: 90,  density: 0.5, speed: 360 },
+  sho1: { bpm: 50,  density: 0.28, speed: 180 },
+  sho2: { bpm: 58,  density: 0.32, speed: 210 },
+  sho3: { bpm: 66,  density: 0.36, speed: 240 },
+  sho4: { bpm: 74,  density: 0.40, speed: 270 },
+  sho5: { bpm: 82,  density: 0.44, speed: 300 },
 };
 
 const SCORE_TABLE = { perfect: 300, good: 100, miss: 0 };
@@ -609,7 +610,10 @@ renderLives();
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let state = 'start'; // 'start' | 'playing' | 'result'
-let diff = 'easy';
+let diff = 'sho1';
+let activeDiff = 'sho2'; // actual difficulty used during play (selected + 1)
+// Maps selected difficulty key to the next level (+1)
+const DIFF_NEXT = { sho1: 'sho2', sho4: 'sho5' };
 
 let notes = [];
 let score = 0;
@@ -773,7 +777,7 @@ function playSound(type) {
 
 // ─── Note generation ──────────────────────────────────────────────────────────
 function spawnNote() {
-  const d = DIFFICULTY[diff];
+  const d = DIFFICULTY[activeDiff];
   const laneCount = Math.random() < d.density ? (Math.random() < 0.15 ? 2 : 1) : 1;
   const lanes = shuffleArr([0, 1, 2, 3]).slice(0, laneCount);
   lanes.forEach(lane => {
@@ -966,7 +970,8 @@ function startGame() {
   lives = MAX_LIVES;
   stats = { perfect: 0, good: 0, miss: 0 };
   songTimer = 0;
-  beatInterval = (60 / DIFFICULTY[diff].bpm) * 1000;
+  activeDiff = DIFF_NEXT[diff] || diff;
+  beatInterval = (60 / DIFFICULTY[activeDiff].bpm) * 1000;
   nextNoteTime = beatInterval;
   updateHUD();
   updateLives();
@@ -1162,13 +1167,13 @@ function onTap(lane) {
     if (dist < bestDist) { bestDist = dist; best = n; }
   });
 
-  const maxDist = TIMING.good * (DIFFICULTY[diff].speed / 1000);
+  const maxDist = TIMING.good * (DIFFICULTY[activeDiff].speed / 1000);
   if (!best || bestDist > maxDist) return; // No note to hit
 
   best.hit = true;
   best.hitEffect = 1;
 
-  const timingMs = bestDist / (DIFFICULTY[diff].speed / 1000);
+  const timingMs = bestDist / (DIFFICULTY[activeDiff].speed / 1000);
 
   if (timingMs <= TIMING.perfect) {
     registerHit('perfect');

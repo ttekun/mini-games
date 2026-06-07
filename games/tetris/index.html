@@ -310,6 +310,34 @@
             background: rgba(255, 255, 255, 0.1);
             color: white;
         }
+
+        .start-screen .diff-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .start-screen .diff-btn {
+            padding: 8px 18px;
+            border: 1px solid rgba(99, 179, 237, 0.3);
+            background: transparent;
+            color: rgba(99, 179, 237, 0.45);
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+
+        .start-screen .diff-btn.active {
+            background: rgba(99, 179, 237, 0.15);
+            border-color: #63b3ed;
+            color: #63b3ed;
+            text-shadow: 0 0 8px rgba(99, 179, 237, 0.6);
+            box-shadow: 0 0 12px rgba(99, 179, 237, 0.2);
+        }
         
         @keyframes badgePulse {
             0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(0, 255, 231, 0.3); }
@@ -430,6 +458,10 @@
         <div class="demo-badge">DEMO PLAY</div>
         <h1>テトリス</h1>
         <div class="subtitle">// CLASSIC BLOCK PUZZLE //</div>
+        <div class="diff-btns">
+            <button type="button" class="diff-btn active" data-diff="1">小学生1</button>
+            <button type="button" class="diff-btn" data-diff="4">小学生4</button>
+        </div>
         <button class="start-game-btn" id="startGameBtn">START</button>
         <button class="home-link" id="homeBtnScreen">HOME</button>
     </div>
@@ -956,14 +988,14 @@
                 if (this.gameOverEl) this.gameOverEl.style.display = 'block';
             }
             
-            restart() {
+            restart(startLevel = 1) {
                 this.stopLoop();
 
                 this.board = Array(this.ROWS).fill().map(() => Array(this.COLS).fill(0));
                 this.score = 0;
-                this.lines = 0;
-                this.level = 1;
-                this.dropInterval = 1000;
+                this.lines = (startLevel - 1) * 10;
+                this.level = startLevel;
+                this.dropInterval = this.levelDropInterval();
                 this.dropCounter = 0;
                 this.isPaused = false;
                 this.isGameOver = false;
@@ -1105,15 +1137,25 @@
         document.addEventListener('DOMContentLoaded', () => {
             const game = new Tetris();
             const startScreen = document.getElementById('startScreen');
+            let selectedDiff = 1;
 
             // Start demo mode automatically
             game.startDemo();
+
+            // Difficulty selection buttons
+            document.querySelectorAll('.start-screen .diff-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedDiff = parseInt(btn.dataset.diff, 10);
+                    document.querySelectorAll('.start-screen .diff-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
 
             // Start game from start screen
             document.getElementById('startGameBtn').addEventListener('click', () => {
                 startScreen.classList.add('hidden');
                 game.stopDemo();
-                game.restart();
+                game.restart(selectedDiff + 1);
             });
 
             // Home button on start screen
