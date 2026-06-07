@@ -531,6 +531,7 @@
     <div class="corner corner-tr"></div>
     <div class="corner corner-bl"></div>
     <div class="corner corner-br"></div>
+    <div id="result-level-label" style="font-size:0.72rem;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:4px;"></div>
     <div id="rank-badge">S</div>
     <div class="stat-grid">
       <div class="stat-box score">
@@ -539,7 +540,7 @@
       </div>
       <div class="stat-box" style="grid-column: span 1;">
         <div class="label">MAX COMBO</div>
-        <div class="value" id="result-combo" style="color:#bc00ff; text-shadow: 0 0 10px #bc00ff;">0</div>
+        <div class="value" id="result-combo" style="color:#c77dff; text-shadow: 0 0 10px #c77dff;">0</div>
       </div>
       <div class="stat-box perfect">
         <div class="label">PERFECT</div>
@@ -554,6 +555,12 @@
         <div class="value" id="result-miss">0</div>
       </div>
     </div>
+    <button type="button" class="btn-primary hidden" id="next-btn">
+      <span class="btn-primary-inner" id="next-btn-label">つぎへ ▶</span>
+    </button>
+    <button type="button" class="btn-primary hidden" id="clear-btn">
+      <span class="btn-primary-inner">🎉 ゲームクリア!</span>
+    </button>
     <button type="button" class="btn-primary" id="retry-btn">
       <span class="btn-primary-inner">RETRY</span>
     </button>
@@ -594,6 +601,11 @@ let diff = 'sho1';
 let activeDiff = 'sho2'; // actual difficulty used during play (selected + 1)
 // Maps selected difficulty key to the next level (+1)
 const DIFF_NEXT = { sho1: 'sho2', sho4: 'sho5' };
+
+// Level progression
+const LEVEL_ORDER = ['sho1', 'sho2', 'sho3', 'sho4', 'sho5'];
+const LEVEL_LABEL = { sho1: 'LEVEL 1', sho2: 'LEVEL 2', sho3: 'LEVEL 3', sho4: 'LEVEL 4', sho5: 'LEVEL 5' };
+let currentLevel = 'sho1'; // level currently being played (set on game start)
 
 let notes = [];
 let score = 0;
@@ -753,50 +765,129 @@ function playSound(type) {
   osc.stop(audioCtx.currentTime + 0.3);
 }
 
-// ─── BGM (J-pop style, Web Audio API) ────────────────────────────────────────
-const BGM_BPM = 128;
-const BGM_BEAT = 60 / BGM_BPM;          // seconds per beat
-const BGM_BAR  = BGM_BEAT * 4;          // seconds per bar
+// ─── BGM (J-pop style, Web Audio API, 5 levels) ───────────────────────────────
 
-// Note frequencies (equal temperament, A4=440)
+// Note frequency helper (equal temperament, A4=440)
+// Usage: NOTE('C',4) or NOTE('F#',4)
 const NOTE = (() => {
   const base = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
-  return (name, oct) => 440 * Math.pow(2, (base[name[0]] + (name[1]==='#'?1:0) + (oct-4)*12 - 9) / 12);
+  return (name, oct) => {
+    const sharp = name.length > 1 && name[1] === '#' ? 1 : 0;
+    return 440 * Math.pow(2, (base[name[0]] + sharp + (oct - 4) * 12 - 9) / 12);
+  };
 })();
 
-// J-pop melody: 16-note pattern (each = 1/4 beat = 1/16th note)
-// [freq, durationBeats, startBeat (within 8-beat phrase)]
-const MELODY_PHRASE = [
-  [NOTE('E',5), 0.5, 0],  [NOTE('G',5), 0.5, 0.5],
-  [NOTE('A',5), 1,   1],  [NOTE('G',5), 0.5, 2],
-  [NOTE('E',5), 0.5, 2.5],[NOTE('D',5), 1,   3],
-  [NOTE('C',5), 0.5, 4],  [NOTE('E',5), 0.5, 4.5],
-  [NOTE('G',5), 0.5, 5],  [NOTE('A',5), 0.5, 5.5],
-  [NOTE('B',5), 1,   6],  [NOTE('A',5), 0.5, 7],
-  [NOTE('G',5), 0.5, 7.5],
-];
-
-// Bass: root notes on beats 0,2 of each bar
-const BASS_PHRASE = [
-  [NOTE('C',3), 0.8, 0], [NOTE('G',3), 0.8, 2],
-  [NOTE('A',3), 0.8, 4], [NOTE('F',3), 0.8, 6],
-];
-
-// Chord pads (2-beat stabs)
-const PAD_PHRASE = [
-  [[NOTE('C',4), NOTE('E',4), NOTE('G',4)], 1.8, 0],
-  [[NOTE('G',3), NOTE('B',3), NOTE('D',4)], 1.8, 2],
-  [[NOTE('A',3), NOTE('C',4), NOTE('E',4)], 1.8, 4],
-  [[NOTE('F',3), NOTE('A',3), NOTE('C',4)], 1.8, 6],
-];
+// BGM data per level: bpm, melody, bass, pads
+// Each note: [freq, durationBeats, startBeat]  (phrase = 8 beats)
+const BGM_LEVELS = {
+  // Lv1 — soft & slow, C major, gentle triangle melody
+  sho1: {
+    bpm: 90,
+    melody: [
+      [NOTE('C',5),0.5,0], [NOTE('E',5),0.5,0.5], [NOTE('G',5),1,1],
+      [NOTE('E',5),0.5,2], [NOTE('D',5),0.5,2.5], [NOTE('C',5),1,3],
+      [NOTE('E',5),0.5,4], [NOTE('G',5),0.5,4.5], [NOTE('A',5),1,5],
+      [NOTE('G',5),0.5,6], [NOTE('E',5),0.5,6.5], [NOTE('C',5),1,7],
+    ],
+    bass: [
+      [NOTE('C',3),0.8,0],[NOTE('G',3),0.8,2],[NOTE('A',3),0.8,4],[NOTE('F',3),0.8,6],
+    ],
+    pads: [
+      [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,0],
+      [[NOTE('G',3),NOTE('B',3),NOTE('D',4)],1.8,2],
+      [[NOTE('A',3),NOTE('C',4),NOTE('E',4)],1.8,4],
+      [[NOTE('F',3),NOTE('A',3),NOTE('C',4)],1.8,6],
+    ],
+  },
+  // Lv2 — slightly brighter, G major feel
+  sho2: {
+    bpm: 104,
+    melody: [
+      [NOTE('G',5),0.5,0], [NOTE('A',5),0.5,0.5], [NOTE('B',5),1,1],
+      [NOTE('A',5),0.5,2], [NOTE('G',5),0.5,2.5], [NOTE('E',5),1,3],
+      [NOTE('D',5),0.5,4], [NOTE('E',5),0.5,4.5], [NOTE('G',5),1,5],
+      [NOTE('A',5),0.5,6], [NOTE('B',5),0.5,6.5], [NOTE('G',5),1,7],
+    ],
+    bass: [
+      [NOTE('G',3),0.8,0],[NOTE('D',3),0.8,2],[NOTE('C',3),0.8,4],[NOTE('D',3),0.8,6],
+    ],
+    pads: [
+      [[NOTE('G',3),NOTE('B',3),NOTE('D',4)],1.8,0],
+      [[NOTE('D',3),NOTE('F#',3),NOTE('A',3)],1.8,2],
+      [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,4],
+      [[NOTE('D',3),NOTE('F#',3),NOTE('A',3)],1.8,6],
+    ],
+  },
+  // Lv3 — upbeat pop, A minor with bright jumps
+  sho3: {
+    bpm: 116,
+    melody: [
+      [NOTE('A',5),0.5,0], [NOTE('C',6),0.5,0.5],[NOTE('E',6),0.75,1],
+      [NOTE('D',6),0.5,2], [NOTE('C',6),0.5,2.5],[NOTE('A',5),0.75,3],
+      [NOTE('G',5),0.5,4], [NOTE('A',5),0.5,4.5],[NOTE('C',6),0.75,5],
+      [NOTE('E',6),0.5,6], [NOTE('D',6),0.25,6.5],[NOTE('C',6),0.25,6.75],[NOTE('A',5),0.5,7],
+    ],
+    bass: [
+      [NOTE('A',3),0.8,0],[NOTE('E',3),0.8,2],[NOTE('F',3),0.8,4],[NOTE('E',3),0.8,6],
+    ],
+    pads: [
+      [[NOTE('A',3),NOTE('C',4),NOTE('E',4)],1.8,0],
+      [[NOTE('E',3),NOTE('G',3),NOTE('B',3)],1.8,2],
+      [[NOTE('F',3),NOTE('A',3),NOTE('C',4)],1.8,4],
+      [[NOTE('E',3),NOTE('G',3),NOTE('B',3)],1.8,6],
+    ],
+  },
+  // Lv4 — energetic, D major, faster rhythm
+  sho4: {
+    bpm: 126,
+    melody: [
+      [NOTE('D',6),0.5,0], [NOTE('E',6),0.25,0.5],[NOTE('F#',6),0.25,0.75],[NOTE('A',6),0.5,1],
+      [NOTE('G',6),0.5,2], [NOTE('F#',6),0.25,2.5],[NOTE('E',6),0.25,2.75],[NOTE('D',6),0.5,3],
+      [NOTE('F#',6),0.5,4],[NOTE('A',6),0.5,4.5],[NOTE('B',6),0.5,5],
+      [NOTE('A',6),0.25,6],[NOTE('G',6),0.25,6.25],[NOTE('F#',6),0.25,6.5],[NOTE('D',6),0.75,6.75],
+    ],
+    bass: [
+      [NOTE('D',3),0.6,0],[NOTE('A',3),0.6,2],[NOTE('G',3),0.6,4],[NOTE('A',3),0.6,6],
+    ],
+    pads: [
+      [[NOTE('D',4),NOTE('F#',4),NOTE('A',4)],1.6,0],
+      [[NOTE('A',3),NOTE('C#',4),NOTE('E',4)],1.6,2],
+      [[NOTE('G',3),NOTE('B',3),NOTE('D',4)],1.6,4],
+      [[NOTE('A',3),NOTE('C#',4),NOTE('E',4)],1.6,6],
+    ],
+  },
+  // Lv5 — max energy, E major, dense 16th notes
+  sho5: {
+    bpm: 138,
+    melody: [
+      [NOTE('E',6),0.25,0],[NOTE('F#',6),0.25,0.25],[NOTE('G#',6),0.25,0.5],[NOTE('B',6),0.5,0.75],
+      [NOTE('A',6),0.25,1.25],[NOTE('G#',6),0.25,1.5],[NOTE('F#',6),0.5,1.75],
+      [NOTE('E',6),0.25,2.25],[NOTE('F#',6),0.25,2.5],[NOTE('G#',6),0.25,2.75],
+      [NOTE('B',6),0.5,3],[NOTE('C#',7),0.25,3.5],[NOTE('B',6),0.25,3.75],
+      [NOTE('A',6),0.25,4],[NOTE('G#',6),0.25,4.25],[NOTE('F#',6),0.5,4.5],
+      [NOTE('E',6),0.25,5],[NOTE('F#',6),0.25,5.25],[NOTE('G#',6),0.25,5.5],[NOTE('B',6),0.75,5.75],
+      [NOTE('C#',7),0.5,6.5],[NOTE('B',6),0.5,7],
+    ],
+    bass: [
+      [NOTE('E',3),0.5,0],[NOTE('B',3),0.5,1],[NOTE('A',3),0.5,2],[NOTE('B',3),0.5,3],
+      [NOTE('E',3),0.5,4],[NOTE('B',3),0.5,5],[NOTE('A',3),0.5,6],[NOTE('B',3),0.5,7],
+    ],
+    pads: [
+      [[NOTE('E',4),NOTE('G#',4),NOTE('B',4)],1.4,0],
+      [[NOTE('B',3),NOTE('D#',4),NOTE('F#',4)],1.4,2],
+      [[NOTE('A',3),NOTE('C#',4),NOTE('E',4)],1.4,4],
+      [[NOTE('B',3),NOTE('D#',4),NOTE('F#',4)],1.4,6],
+    ],
+  },
+};
 
 const PHRASE_LEN = 8; // beats
 
-let bgmNodes = [];   // active source nodes for cleanup
+let bgmNodes = [];
 let bgmLoopId = null;
 let bgmGain = null;
-let bgmStartTime = 0;
 let bgmPlaying = false;
+let bgmLevel = null; // which level's BGM is currently active
 
 function bgmPlayTone(freq, startTime, duration, type, gainVal, masterGain) {
   const osc  = audioCtx.createOscillator();
@@ -814,8 +905,8 @@ function bgmPlayTone(freq, startTime, duration, type, gainVal, masterGain) {
   bgmNodes.push(osc);
 }
 
-function bgmPlayDrum(startTime, masterGain) {
-  // Kick — low sine burst
+function bgmPlayDrum(startTime, beat, masterGain) {
+  // Kick on beat 0
   const kick = audioCtx.createOscillator();
   const kGain = audioCtx.createGain();
   kick.type = 'sine';
@@ -827,7 +918,8 @@ function bgmPlayDrum(startTime, masterGain) {
   kick.start(startTime); kick.stop(startTime + 0.25);
   bgmNodes.push(kick);
 
-  // Snare — noise burst via buffer
+  // Snare on beat 1
+  const snareTime = startTime + beat;
   const bufLen = audioCtx.sampleRate * 0.1;
   const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
   const data = buf.getChannelData(0);
@@ -838,17 +930,16 @@ function bgmPlayDrum(startTime, masterGain) {
   sFilter.type = 'highpass'; sFilter.frequency.value = 1800;
   snare.buffer = buf;
   snare.connect(sFilter); sFilter.connect(sGain); sGain.connect(masterGain);
-  sGain.gain.setValueAtTime(0, startTime + BGM_BEAT);
-  sGain.gain.linearRampToValueAtTime(0.25, startTime + BGM_BEAT + 0.005);
-  sGain.gain.exponentialRampToValueAtTime(0.001, startTime + BGM_BEAT + 0.12);
-  snare.start(startTime + BGM_BEAT);
-  snare.stop(startTime + BGM_BEAT + 0.15);
+  sGain.gain.setValueAtTime(0, snareTime);
+  sGain.gain.linearRampToValueAtTime(0.25, snareTime + 0.005);
+  sGain.gain.exponentialRampToValueAtTime(0.001, snareTime + 0.12);
+  snare.start(snareTime); snare.stop(snareTime + 0.15);
   bgmNodes.push(snare);
 
-  // Hi-hat every half beat
-  for (let h = 0; h < 4; h++) {
-    const ht = startTime + h * BGM_BEAT * 0.5;
-    const hBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+  // Hi-hat every half beat (2 per bar)
+  for (let h = 0; h < 2; h++) {
+    const ht = startTime + h * beat;
+    const hBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.04, audioCtx.sampleRate);
     const hData = hBuf.getChannelData(0);
     for (let i = 0; i < hData.length; i++) hData[i] = Math.random() * 2 - 1;
     const hat = audioCtx.createBufferSource();
@@ -857,60 +948,57 @@ function bgmPlayDrum(startTime, masterGain) {
     hFilter.type = 'highpass'; hFilter.frequency.value = 8000;
     hat.buffer = hBuf;
     hat.connect(hFilter); hFilter.connect(hGain); hGain.connect(masterGain);
-    hGain.gain.setValueAtTime(0.12, ht);
-    hGain.gain.exponentialRampToValueAtTime(0.001, ht + 0.05);
-    hat.start(ht); hat.stop(ht + 0.06);
+    hGain.gain.setValueAtTime(0.1, ht);
+    hGain.gain.exponentialRampToValueAtTime(0.001, ht + 0.04);
+    hat.start(ht); hat.stop(ht + 0.05);
     bgmNodes.push(hat);
   }
 }
 
 function bgmSchedulePhrase(phraseStart) {
   if (!bgmPlaying) return;
+  const cfg = BGM_LEVELS[bgmLevel];
+  const beat = 60 / cfg.bpm;
+  const mg = bgmGain;
 
-  // Master gain for BGM
-  const masterGain = bgmGain;
-
-  // Drums: one bar = 2 beats, schedule 2 bars per phrase
+  // Drums: 4 bars per phrase (bar = 2 beats)
   for (let bar = 0; bar < 4; bar++) {
-    bgmPlayDrum(phraseStart + bar * BGM_BEAT * 2, masterGain);
+    bgmPlayDrum(phraseStart + bar * beat * 2, beat, mg);
   }
 
-  // Melody
-  MELODY_PHRASE.forEach(([freq, dur, beat]) => {
-    bgmPlayTone(freq, phraseStart + beat * BGM_BEAT, dur * BGM_BEAT * 0.9,
-                'triangle', 0.18, masterGain);
+  // Melody (triangle — bright & cute)
+  cfg.melody.forEach(([freq, dur, b]) => {
+    bgmPlayTone(freq, phraseStart + b * beat, dur * beat * 0.88, 'triangle', 0.18, mg);
   });
 
-  // Bass
-  BASS_PHRASE.forEach(([freq, dur, beat]) => {
-    bgmPlayTone(freq, phraseStart + beat * BGM_BEAT, dur * BGM_BEAT,
-                'sawtooth', 0.12, masterGain);
+  // Bass (sawtooth)
+  cfg.bass.forEach(([freq, dur, b]) => {
+    bgmPlayTone(freq, phraseStart + b * beat, dur * beat, 'sawtooth', 0.11, mg);
   });
 
-  // Pad chords
-  PAD_PHRASE.forEach(([freqs, dur, beat]) => {
+  // Pad chords (sine)
+  cfg.pads.forEach(([freqs, dur, b]) => {
     freqs.forEach(freq => {
-      bgmPlayTone(freq, phraseStart + beat * BGM_BEAT, dur * BGM_BEAT,
-                  'sine', 0.06, masterGain);
+      bgmPlayTone(freq, phraseStart + b * beat, dur * beat, 'sine', 0.055, mg);
     });
   });
 
-  // Schedule next phrase slightly ahead
-  const nextPhrase = phraseStart + PHRASE_LEN * BGM_BEAT;
-  const lookahead = nextPhrase - audioCtx.currentTime;
-  bgmLoopId = setTimeout(() => bgmSchedulePhrase(nextPhrase), (lookahead - 0.3) * 1000);
+  // Schedule next phrase
+  const nextPhrase = phraseStart + PHRASE_LEN * beat;
+  const wait = (nextPhrase - audioCtx.currentTime - 0.3) * 1000;
+  bgmLoopId = setTimeout(() => bgmSchedulePhrase(nextPhrase), Math.max(0, wait));
 }
 
-function startBGM() {
-  if (bgmPlaying) return;
+function startBGM(level) {
+  stopBGM();
   initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+  bgmLevel = level || 'sho1';
   bgmPlaying = true;
   bgmGain = audioCtx.createGain();
   bgmGain.gain.value = 0.5;
   bgmGain.connect(audioCtx.destination);
-  bgmStartTime = audioCtx.currentTime + 0.05;
-  bgmSchedulePhrase(bgmStartTime);
+  bgmSchedulePhrase(audioCtx.currentTime + 0.05);
 }
 
 function stopBGM() {
@@ -1112,7 +1200,7 @@ function drawDemo() {
 startDemo();
 
 // ─── Game logic ───────────────────────────────────────────────────────────────
-function startGame() {
+function startGame(levelKey) {
   stopDemo();
   notes = [];
   score = 0;
@@ -1121,14 +1209,16 @@ function startGame() {
   lives = MAX_LIVES;
   stats = { perfect: 0, good: 0, miss: 0 };
   songTimer = 0;
-  activeDiff = DIFF_NEXT[diff] || diff;
+  // levelKey is explicitly passed when advancing levels; otherwise use DIFF_NEXT[diff]
+  currentLevel = levelKey || (DIFF_NEXT[diff] || diff);
+  activeDiff = currentLevel;
   beatInterval = (60 / DIFFICULTY[activeDiff].bpm) * 1000;
   nextNoteTime = beatInterval;
   updateHUD();
   updateLives();
   state = 'playing';
   lastTime = performance.now();
-  startBGM();
+  startBGM(currentLevel);
   requestAnimationFrame(gameLoop);
 }
 
@@ -1416,6 +1506,7 @@ function endGame() {
   const rank = acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.70 ? 'B' : acc >= 0.50 ? 'C' : 'D';
   const rankColors = { S: '#ffd700', A: '#64c8ff', B: '#64ff96', C: '#ffc864', D: '#ff6464' };
 
+  document.getElementById('result-level-label').textContent = LEVEL_LABEL[currentLevel];
   document.getElementById('rank-badge').textContent = rank;
   document.getElementById('rank-badge').style.color = rankColors[rank];
   document.getElementById('rank-badge').style.textShadow = `0 0 30px ${rankColors[rank]}`;
@@ -1424,6 +1515,14 @@ function endGame() {
   document.getElementById('result-perfect').textContent = stats.perfect;
   document.getElementById('result-good').textContent = stats.good;
   document.getElementById('result-miss').textContent = stats.miss;
+
+  // Show next-level or game-clear button only on clear (no lives lost to 0)
+  const cleared = lives > 0;
+  const nextIdx = LEVEL_ORDER.indexOf(currentLevel) + 1;
+  const hasNext = nextIdx < LEVEL_ORDER.length;
+
+  document.getElementById('next-btn').classList.toggle('hidden', !(cleared && hasNext));
+  document.getElementById('clear-btn').classList.toggle('hidden', !(cleared && !hasNext));
 
   document.getElementById('result-screen').classList.remove('hidden');
 }
@@ -1482,10 +1581,25 @@ document.getElementById('start-btn').addEventListener('click', () => {
   startGame();
 });
 
+// Next level
+document.getElementById('next-btn').addEventListener('click', () => {
+  document.getElementById('result-screen').classList.add('hidden');
+  const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(currentLevel) + 1];
+  startGame(nextLevel);
+});
+
+// Game clear — back to menu
+document.getElementById('clear-btn').addEventListener('click', () => {
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('start-screen').classList.remove('hidden');
+  state = 'start';
+  startDemo();
+});
+
 // Retry
 document.getElementById('retry-btn').addEventListener('click', () => {
   document.getElementById('result-screen').classList.add('hidden');
-  startGame();
+  startGame(currentLevel);
 });
 
 // Menu
