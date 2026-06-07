@@ -851,7 +851,11 @@
         }
 
         function startBGM(level) {
-          if (!bgmEnabled) return;
+          console.log('startBGM called with level:', level, 'bgmEnabled:', bgmEnabled);
+          if (!bgmEnabled) {
+            console.log('BGM is disabled, not starting');
+            return;
+          }
           stopBGM();
           bgmInitAudio();
           if (bgmAudioCtx.state === 'suspended') bgmAudioCtx.resume();
@@ -861,6 +865,7 @@
           bgmMasterGain.gain.value = 0.5;
           bgmMasterGain.connect(bgmAudioCtx.destination);
           bgmSchedulePhrase(bgmAudioCtx.currentTime + 0.05);
+          console.log('BGM started successfully');
         }
 
         function stopBGM() {
@@ -876,12 +881,16 @@
           localStorage.setItem('bgmEnabled', bgmEnabled);
           updateBGMButton();
           
+          console.log('BGM toggle:', bgmEnabled, 'isPlaying:', window.tetrisGame?.isPlaying);
+          
           if (bgmEnabled) {
             const tetris = window.tetrisGame;
             if (tetris && tetris.isPlaying) {
+              console.log('Starting BGM for level:', tetris.level);
               startBGM(tetris.level);
             }
           } else {
+            console.log('Stopping BGM');
             stopBGM();
           }
         }
