@@ -3,8 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <title>Mini Games</title>
   <style>
+    :root {
+      --pop-pink:   #ff6eb4;
+      --pop-sky:    #38d9f5;
+      --pop-yellow: #ffe44d;
+      --pop-mint:   #4dffc3;
+      --pop-purple: #c77dff;
+      --pop-orange: #ff9f43;
+      --font-main: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -13,26 +26,35 @@
 
     body {
       min-height: 100vh;
-      background: #0a0a1a;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(160deg, #1a0533 0%, #0a1a40 50%, #0d2b1a 100%);
+      font-family: var(--font-main);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      color: #fff;
     }
 
-    /* Animated background grid */
+    /* Floating dot particles */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(0, 255, 231, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 231, 0.03) 1px, transparent 1px);
-      background-size: 50px 50px;
+        radial-gradient(circle, rgba(255,110,180,0.15) 1px, transparent 1px),
+        radial-gradient(circle, rgba(56,217,245,0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,228,77,0.10) 1px, transparent 1px);
+      background-size: 60px 60px, 90px 90px, 120px 120px;
+      background-position: 0 0, 30px 30px, 15px 15px;
       pointer-events: none;
       z-index: 0;
+      animation: bgFloat 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgFloat {
+      from { background-position: 0 0, 30px 30px, 15px 15px; }
+      to   { background-position: 10px 20px, 40px 50px, 25px 35px; }
     }
 
     .container {
@@ -44,189 +66,198 @@
       max-width: 600px;
     }
 
+    /* Floating icons behind title */
+    .sparkle-row {
+      font-size: 1rem;
+      letter-spacing: 10px;
+      color: rgba(255,228,77,0.35);
+      margin-bottom: 10px;
+      animation: sparkleRow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes sparkleRow {
+      from { opacity: 0.35; transform: scale(0.97); }
+      to   { opacity: 0.8;  transform: scale(1.03); }
+    }
+
     h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      letter-spacing: 6px;
-      color: #00ffe7;
-      text-shadow: 0 0 20px rgba(0, 255, 231, 0.5), 0 0 40px rgba(0, 255, 231, 0.2);
-      margin-bottom: 8px;
+      font-size: 2.6rem;
+      font-weight: 900;
+      letter-spacing: 5px;
+      background: linear-gradient(135deg, var(--pop-sky) 0%, var(--pop-pink) 50%, var(--pop-yellow) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 14px rgba(56,217,245,0.5));
+      margin-bottom: 6px;
     }
 
     .subtitle {
-      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-family: var(--font-main);
       font-size: 0.75rem;
-      color: rgba(0, 255, 231, 0.4);
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
       letter-spacing: 3px;
-      margin-bottom: 40px;
-      text-transform: uppercase;
+      margin-bottom: 36px;
     }
 
     .game-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 18px;
       padding: 0 10px;
     }
 
     @media (max-width: 480px) {
       .game-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 14px;
       }
-
-      h1 {
-        font-size: 2rem;
-      }
+      h1 { font-size: 2rem; }
     }
 
     .game-card {
       position: relative;
-      border-radius: 12px;
+      border-radius: 24px;
       overflow: hidden;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.18s, box-shadow 0.18s;
       text-decoration: none;
       display: block;
     }
 
-    .game-card:hover {
-      transform: translateY(-4px);
-    }
+    .game-card:hover  { transform: translateY(-6px); }
+    .game-card:active { transform: scale(0.96); }
 
-    .game-card:active {
-      transform: scale(0.97);
-    }
-
-    /* Tetris card */
+    /* Tetris card — sky/mint accent */
     .game-card.tetris {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      border: 1px solid rgba(66, 153, 225, 0.4);
-      box-shadow: 0 0 20px rgba(66, 153, 225, 0.15);
+      background: linear-gradient(145deg, rgba(56,217,245,0.18) 0%, rgba(77,255,195,0.10) 100%);
+      border: 2px solid rgba(56,217,245,0.35);
+      box-shadow: 0 4px 24px rgba(56,217,245,0.2);
     }
 
     .game-card.tetris:hover {
-      box-shadow: 0 4px 30px rgba(66, 153, 225, 0.35);
+      box-shadow: 0 8px 36px rgba(56,217,245,0.45), 0 0 60px rgba(56,217,245,0.15);
+      border-color: var(--pop-sky);
     }
 
-    /* Rhythm card */
+    /* Rhythm card — pink/purple accent */
     .game-card.rhythm {
-      background: linear-gradient(135deg, #04030a 0%, #080614 50%, #0d0b1f 100%);
-      border: 1px solid rgba(0, 255, 231, 0.3);
-      box-shadow: 0 0 20px rgba(0, 255, 231, 0.1);
+      background: linear-gradient(145deg, rgba(255,110,180,0.18) 0%, rgba(199,125,255,0.10) 100%);
+      border: 2px solid rgba(255,110,180,0.35);
+      box-shadow: 0 4px 24px rgba(255,110,180,0.2);
     }
 
     .game-card.rhythm:hover {
-      box-shadow: 0 4px 30px rgba(0, 255, 231, 0.3);
+      box-shadow: 0 8px 36px rgba(255,110,180,0.45), 0 0 60px rgba(199,125,255,0.15);
+      border-color: var(--pop-pink);
     }
 
+    /* Glassmorphism inner */
     .card-content {
-      padding: 32px 20px;
+      padding: 30px 20px 26px;
       text-align: center;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(6px);
     }
 
     .card-icon {
-      font-size: 3rem;
-      margin-bottom: 12px;
+      font-size: 3.2rem;
+      margin-bottom: 14px;
       display: block;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+      animation: iconBob 2.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes iconBob {
+      from { transform: translateY(0px); }
+      to   { transform: translateY(-5px); }
+    }
+
+    .game-card.rhythm .card-icon {
+      animation-delay: 0.4s;
     }
 
     .card-title {
+      font-family: var(--font-main);
       font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: 3px;
+      font-weight: 900;
+      letter-spacing: 2px;
       margin-bottom: 8px;
     }
 
     .game-card.tetris .card-title {
-      color: #63b3ed;
-      text-shadow: 0 0 10px rgba(99, 179, 237, 0.4);
+      background: linear-gradient(135deg, var(--pop-sky), var(--pop-mint));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 8px rgba(56,217,245,0.4));
     }
 
     .game-card.rhythm .card-title {
-      color: #00ffe7;
-      text-shadow: 0 0 10px rgba(0, 255, 231, 0.4);
+      background: linear-gradient(135deg, var(--pop-pink), var(--pop-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 8px rgba(255,110,180,0.4));
     }
 
     .card-desc {
-      font-family: 'SFMono-Regular', Consolas, monospace;
-      font-size: 0.72rem;
-      color: rgba(200, 200, 255, 0.45);
+      font-family: var(--font-main);
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.45);
       letter-spacing: 1px;
     }
 
-    /* Corner decorations on cards */
-    .game-card::before,
-    .game-card::after {
-      content: '';
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      pointer-events: none;
+    /* Difficulty badge */
+    .card-badge {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 14px;
+      border-radius: 50px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1px;
     }
 
-    .game-card::before {
-      top: 6px;
-      left: 6px;
-      border-top: 2px solid currentColor;
-      border-left: 2px solid currentColor;
+    .game-card.tetris .card-badge {
+      background: rgba(56,217,245,0.15);
+      border: 1px solid rgba(56,217,245,0.4);
+      color: var(--pop-sky);
     }
 
-    .game-card::after {
-      bottom: 6px;
-      right: 6px;
-      border-bottom: 2px solid currentColor;
-      border-right: 2px solid currentColor;
-    }
-
-    .game-card.tetris::before,
-    .game-card.tetris::after {
-      color: rgba(66, 153, 225, 0.4);
-    }
-
-    .game-card.rhythm::before,
-    .game-card.rhythm::after {
-      color: rgba(0, 255, 231, 0.3);
-    }
-
-    /* Scanline overlay */
-    .container::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.1) 2px,
-        rgba(0, 0, 0, 0.1) 4px
-      );
-      pointer-events: none;
-      z-index: 999;
+    .game-card.rhythm .card-badge {
+      background: rgba(255,110,180,0.15);
+      border: 1px solid rgba(255,110,180,0.4);
+      color: var(--pop-pink);
     }
 
     .footer {
       position: fixed;
       bottom: 16px;
-      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-family: var(--font-main);
       font-size: 0.65rem;
-      color: rgba(200, 200, 255, 0.2);
-      letter-spacing: 2px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 3px;
       z-index: 1;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="sparkle-row">✦ ✧ ★ ✧ ✦ ✧ ★ ✧ ✦</div>
     <h1>MINI GAMES</h1>
-    <div class="subtitle">// SELECT YOUR GAME //</div>
+    <div class="subtitle">♪ ゲームをえらんでね ♪</div>
 
     <div class="game-grid">
       <a href="games/tetris/index.html" class="game-card tetris">
         <div class="card-content">
-          <span class="card-icon">🧱</span>
-          <div class="card-title">TETRIS</div>
-          <div class="card-desc">Classic block puzzle</div>
+          <span class="card-icon">🧩</span>
+          <div class="card-title">テトリス</div>
+          <div class="card-desc">ブロックパズル</div>
+          <div class="card-badge">小学生1〜4</div>
         </div>
       </a>
 
@@ -234,7 +265,8 @@
         <div class="card-content">
           <span class="card-icon">🎵</span>
           <div class="card-title">NEON//BEAT</div>
-          <div class="card-desc">Rhythm tap game</div>
+          <div class="card-desc">リズムタップゲーム</div>
+          <div class="card-badge">小学生1〜4</div>
         </div>
       </a>
     </div>
