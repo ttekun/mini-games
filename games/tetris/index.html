@@ -984,6 +984,9 @@
 
             setupControls() {
                 document.addEventListener('keydown', (e) => {
+                    // In demo mode, ignore all keys except starting the game
+                    if (this.isDemo) return;
+                    
                     if (this.isGameOver) return;
                     
                     if (e.code === 'KeyP') {
@@ -1052,6 +1055,7 @@
             
             handleTouchAction(action) {
                 if (!action) return;
+                if (this.isDemo) return;
                 if (this.isGameOver) return;
                 if (this.isPaused) return;
                 
