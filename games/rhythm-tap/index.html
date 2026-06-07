@@ -222,8 +222,28 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      background: rgba(4,3,10,0.96);
+      background: rgba(4,3,10,0.75);
       padding: 24px;
+    }
+    
+    .demo-badge {
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--cp-cyan);
+      border: 1px solid var(--cp-cyan);
+      padding: 4px 16px;
+      margin-bottom: 16px;
+      text-shadow: 0 0 8px var(--cp-cyan);
+      box-shadow: 0 0 12px rgba(0,255,231,0.3);
+      animation: demoBadgePulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes demoBadgePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(0,255,231,0.3); }
+      50% { opacity: 0.6; box-shadow: 0 0 6px rgba(0,255,231,0.15); }
     }
 
     /* Grid bg for screens */
@@ -511,6 +531,7 @@
     <div class="corner corner-tr"></div>
     <div class="corner corner-bl"></div>
     <div class="corner corner-br"></div>
+    <div class="demo-badge">DEMO PLAY</div>
     <h1 data-text="NEON//BEAT">NEON//BEAT</h1>
     <div class="subtitle">// RHYTHM SYSTEM v2.0 //</div>
     <p>ノートが判定ラインに来たらタップ<br>タイミングよくヒットしてスコアを稼げ</p>

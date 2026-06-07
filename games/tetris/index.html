@@ -223,6 +223,52 @@
             }
         }
         
+        .demo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 50;
+            pointer-events: none;
+            animation: demoPulse 2s ease-in-out infinite;
+        }
+        
+        .demo-overlay.hidden {
+            display: none;
+        }
+        
+        .demo-label {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 12px;
+            color: #00ffe7;
+            text-shadow: 0 0 20px rgba(0, 255, 231, 0.8), 0 0 40px rgba(0, 255, 231, 0.4);
+        }
+        
+        .demo-hint {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 12px;
+            letter-spacing: 2px;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes demoPulse {
+            0%, 100% { background: rgba(0, 0, 0, 0.4); }
+            50% { background: rgba(0, 0, 0, 0.25); }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
         .game-over {
             position: absolute;
             top: 50%;
@@ -305,6 +351,10 @@
         <!-- 게임 캔버스 -->
         <div class="game-area">
             <canvas id="board" width="300" height="600"></canvas>
+            <div class="demo-overlay" id="demoOverlay">
+                <div class="demo-label">DEMO</div>
+                <div class="demo-hint">タップして開始</div>
+            </div>
             <div class="game-over" id="gameOver">
                 <h2>ゲームオーバー</h2>
                 <p>スコア: <span id="finalScore">0</span></p>
@@ -828,6 +878,8 @@
                 // If in demo mode, stop demo and start real game
                 if (this.isDemo) {
                     this.stopDemo();
+                    const overlay = document.getElementById('demoOverlay');
+                    if (overlay) overlay.classList.add('hidden');
                     this.restart();
                     return;
                 }
