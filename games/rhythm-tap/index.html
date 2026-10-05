@@ -558,8 +558,9 @@
     <div class="demo-badge">DEMO PLAY</div>
     <h1 data-text="NEON//BEAT">NEON//BEAT</h1>
     <div class="subtitle">// RHYTHM SYSTEM v2.0 //</div>
-    <p>ノートが判定ラインに来たらタップ<br>タイミングよくヒットしてスコアを稼げ</p>
+    <p id="start-desc">ノートが判定ラインに来たらタップ<br>タイミングよくヒットしてスコアを稼げ</p>
     <div class="diff-btns">
+      <button type="button" class="diff-btn" data-diff="age3">3さい</button>
       <button type="button" class="diff-btn active" data-diff="sho1">小学生1</button>
       <button type="button" class="diff-btn" data-diff="sho4">小学生4</button>
     </div>
@@ -625,7 +626,15 @@ const TIMING = {
   good:   220,  // ms
 };
 
+function getTiming(level) {
+  if (level === 'age3') {
+    return { perfect: 320, good: 650 }; // 3歳児向けに判定幅を大幅に拡大
+  }
+  return TIMING;
+}
+
 const DIFFICULTY = {
+  age3: { bpm: 38,  density: 0.10, speed: 85 },
   sho1: { bpm: 50,  density: 0.28, speed: 180 },
   sho2: { bpm: 58,  density: 0.32, speed: 210 },
   sho3: { bpm: 66,  density: 0.36, speed: 240 },
@@ -644,11 +653,11 @@ let state = 'start'; // 'start' | 'playing' | 'result'
 let diff = 'sho1';
 let activeDiff = 'sho2'; // actual difficulty used during play (selected + 1)
 // Maps selected difficulty key to the next level (+1)
-const DIFF_NEXT = { sho1: 'sho2', sho4: 'sho5' };
+const DIFF_NEXT = { age3: 'age3', sho1: 'sho2', sho4: 'sho5' };
 
 // Level progression
 const LEVEL_ORDER = ['sho1', 'sho2', 'sho3', 'sho4', 'sho5'];
-const LEVEL_LABEL = { sho1: 'LEVEL 1', sho2: 'LEVEL 2', sho3: 'LEVEL 3', sho4: 'LEVEL 4', sho5: 'LEVEL 5' };
+const LEVEL_LABEL = { age3: '3さい', sho1: 'LEVEL 1', sho2: 'LEVEL 2', sho3: 'LEVEL 3', sho4: 'LEVEL 4', sho5: 'LEVEL 5' };
 let currentLevel = 'sho1'; // level currently being played (set on game start)
 
 let notes = [];
@@ -834,6 +843,23 @@ const NOTE = (() => {
 // BGM data per level: bpm, melody, bass, pads
 // Each note: [freq, durationBeats, startBeat]  (phrase = 8 beats)
 const BGM_LEVELS = {
+  // 3さい — Twinkle Twinkle Little Star, gentle toy melody, C major
+  age3: {
+    bpm: 76,
+    melody: [
+      [NOTE('C',5),0.7,0], [NOTE('C',5),0.7,1], [NOTE('G',5),0.7,2], [NOTE('G',5),0.7,3],
+      [NOTE('A',5),0.7,4], [NOTE('A',5),0.7,5], [NOTE('G',5),1.5,6],
+    ],
+    bass: [
+      [NOTE('C',3),0.9,0],[NOTE('E',3),0.9,2],[NOTE('F',3),0.9,4],[NOTE('C',3),0.9,6],
+    ],
+    pads: [
+      [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,0],
+      [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,2],
+      [[NOTE('C',4),NOTE('F',4),NOTE('A',4)],1.8,4],
+      [[NOTE('C',4),NOTE('E',4),NOTE('G',4)],1.8,6],
+    ],
+  },
   // Lv1 — soft & slow, C major, gentle triangle melody
   sho1: {
     bpm: 90,
@@ -1102,12 +1128,20 @@ function updateBGMButton() {
 // ─── Note generation ──────────────────────────────────────────────────────────
 function spawnNote() {
   const d = DIFFICULTY[activeDiff];
-  const laneCount = Math.random() < d.density ? (Math.random() < 0.15 ? 2 : 1) : 1;
+  const isBaby = (activeDiff === 'age3');
+  // 3歳モードは必ず1レーンのみ（同時押しなし）
+  const laneCount = isBaby ? 1 : (Math.random() < d.density ? (Math.random() < 0.15 ? 2 : 1) : 1);
   const lanes = shuffleArr([0, 1, 2, 3]).slice(0, laneCount);
   lanes.forEach(lane => {
-    // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
-    const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
-    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    let emoji;
+    if (isBaby) {
+      const babyEmojis = ['🐶', '🐱', '🐰', '🐼', '🐻', '🚗', '🚀', '⭐', '🍎', '🍓', '🐣', '🌸'];
+      emoji = babyEmojis[Math.floor(Math.random() * babyEmojis.length)];
+    } else {
+      // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
+      const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
+      emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    }
     
     notes.push({
       lane,
@@ -1171,21 +1205,29 @@ function demoLoop(ts) {
   // Spawn demo notes
   if (demoTimer >= demoNextNote) {
     const lane = Math.floor(Math.random() * LANE_COUNT);
-    // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
-    const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
-    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const isBaby = (diff === 'age3');
+    let emoji;
+    if (isBaby) {
+      const babyEmojis = ['🐶', '🐱', '🐰', '🐼', '🐻', '🚗', '🚀', '⭐', '🍎', '🍓', '🐣', '🌸'];
+      emoji = babyEmojis[Math.floor(Math.random() * babyEmojis.length)];
+    } else {
+      // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
+      const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
+      emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    }
+    const currentSpeed = isBaby ? DIFFICULTY.age3.speed : DEMO_SPEED;
     
     demoNotes.push({
       lane,
       y: -NOTE_RADIUS,
-      speed: DEMO_SPEED,
+      speed: currentSpeed,
       hit: false,
       missed: false,
       hitEffect: 0,
       color: LANE_COLORS[lane],
       dino: emoji,
     });
-    demoNextNote += DEMO_BEAT;
+    demoNextNote += isBaby ? DEMO_BEAT * 1.5 : DEMO_BEAT;
   }
 
   // Update demo notes and auto-hit near judgment line
@@ -1279,9 +1321,9 @@ function drawDemo() {
       gc.shadowColor = n.color;
       gc.shadowBlur = 22;
       
-      // Use dinosaur emoji for sho1 difficulty in demo mode
-      if (diff === 'sho1') {
-        drawDinoNote(gc, cx, cy, NOTE_RADIUS, n.color, n.dino);
+      // Use dinosaur or cute emoji for age3 and sho1 difficulty in demo mode
+      if (diff === 'age3' || diff === 'sho1') {
+        drawDinoNote(gc, cx, cy, diff === 'age3' ? NOTE_RADIUS * 1.3 : NOTE_RADIUS, n.color, n.dino);
       } else {
         const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
                                             NOTE_RADIUS * 0.1, cx, cy, NOTE_RADIUS);
@@ -1342,12 +1384,16 @@ function gameLoop(ts) {
   }
 
   // Update notes
+  const currentTiming = getTiming(activeDiff);
   notes.forEach(n => {
     if (state !== 'playing') return;
     if (!n.hit && !n.missed) {
       n.y += n.speed * (dt / 1000);
       // Auto-miss
-      if (n.y > hitY() + TIMING.good * (n.speed / 1000) + NOTE_RADIUS * 2) {
+      const missDist = (activeDiff === 'age3')
+        ? Math.max(currentTiming.good * (n.speed / 1000), 100)
+        : currentTiming.good * (n.speed / 1000);
+      if (n.y > hitY() + missDist + NOTE_RADIUS * 2) {
         n.missed = true;
         onMiss();
       }
@@ -1462,13 +1508,13 @@ function draw() {
       gc.shadowBlur = 0;
 
     } else {
-      // Normal note — glossy circle or dinosaur emoji for sho1
+      // Normal note — glossy circle or emoji for age3 and sho1
       gc.shadowColor = n.color;
       gc.shadowBlur = 22;
 
-      // Use dinosaur emoji for sho1 difficulty
-      if (diff === 'sho1') {
-        drawDinoNote(gc, cx, cy, NOTE_RADIUS, n.color, n.dino);
+      // Use cute / dinosaur emoji for age3 and sho1
+      if (activeDiff === 'age3' || activeDiff === 'sho1' || diff === 'age3' || diff === 'sho1') {
+        drawDinoNote(gc, cx, cy, (activeDiff === 'age3' || diff === 'age3') ? NOTE_RADIUS * 1.3 : NOTE_RADIUS, n.color, n.dino);
       } else {
         // Main fill
         const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
@@ -1530,7 +1576,11 @@ function onTap(lane) {
     if (dist < bestDist) { bestDist = dist; best = n; }
   });
 
-  const maxDist = TIMING.good * (DIFFICULTY[activeDiff].speed / 1000);
+  const currentTiming = getTiming(activeDiff);
+  let maxDist = currentTiming.good * (DIFFICULTY[activeDiff].speed / 1000);
+  if (activeDiff === 'age3') {
+    maxDist = Math.max(maxDist, 105); // 3歳児向けに画面上で十分な当たり判定を確保
+  }
   if (!best || bestDist > maxDist) return; // No note to hit
 
   best.hit = true;
@@ -1538,10 +1588,19 @@ function onTap(lane) {
 
   const timingMs = bestDist / (DIFFICULTY[activeDiff].speed / 1000);
 
-  if (timingMs <= TIMING.perfect) {
-    registerHit('perfect');
+  if (activeDiff === 'age3') {
+    // 3歳児向け：画面上でターゲットに近ければ（60px以内）または判定時間内ならパーフェクト
+    if (bestDist <= 60 || timingMs <= currentTiming.perfect) {
+      registerHit('perfect');
+    } else {
+      registerHit('good');
+    }
   } else {
-    registerHit('good');
+    if (timingMs <= currentTiming.perfect) {
+      registerHit('perfect');
+    } else {
+      registerHit('good');
+    }
   }
 }
 
@@ -1559,7 +1618,10 @@ function onMiss() {
   if (state !== 'playing') return;
   stats.miss++;
   combo = 0;
-  lives--;
+  // 3歳モードはライフが減らず最後まで楽しめる
+  if (activeDiff !== 'age3') {
+    lives--;
+  }
   showJudgment('miss');
   playSound('miss');
   updateHUD();
@@ -1599,10 +1661,11 @@ function renderLives() {
 let judgmentTimer = null;
 function showJudgment(type) {
   const el = document.getElementById('judgment');
+  const isBaby = (activeDiff === 'age3');
   const map = {
-    perfect: { text: '✦ PERFECT ✦', color: '#ffe44d' },
-    good:    { text: '♪ GOOD',     color: '#4dffc3' },
-    miss:    { text: 'MISS',        color: '#ff6eb4' },
+    perfect: { text: isBaby ? '✨ たいへんよくできました ✨' : '✦ PERFECT ✦', color: '#ffe44d' },
+    good:    { text: isBaby ? '♪ じょうず！' : '♪ GOOD',     color: '#4dffc3' },
+    miss:    { text: isBaby ? 'どんまい♪' : 'MISS',        color: '#ff6eb4' },
   };
   const m = map[type];
   el.textContent = m.text;
@@ -1624,15 +1687,16 @@ function endGame() {
   if (state === 'result') return;
   state = 'result';
   stopBGM();
+  const isBaby = (activeDiff === 'age3');
   const total = stats.perfect + stats.good + stats.miss;
   const acc = total > 0 ? (stats.perfect * 100 + stats.good * 60) / (total * 100) : 0;
-  const rank = acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.70 ? 'B' : acc >= 0.50 ? 'C' : 'D';
-  const rankColors = { S: '#ffd700', A: '#64c8ff', B: '#64ff96', C: '#ffc864', D: '#ff6464' };
+  const rank = isBaby ? '💮' : (acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.70 ? 'B' : acc >= 0.50 ? 'C' : 'D');
+  const rankColors = { '💮': '#ff6eb4', S: '#ffd700', A: '#64c8ff', B: '#64ff96', C: '#ffc864', D: '#ff6464' };
 
-  document.getElementById('result-level-label').textContent = LEVEL_LABEL[currentLevel];
+  document.getElementById('result-level-label').textContent = LEVEL_LABEL[currentLevel] || '3さい';
   document.getElementById('rank-badge').textContent = rank;
-  document.getElementById('rank-badge').style.color = rankColors[rank];
-  document.getElementById('rank-badge').style.textShadow = `0 0 30px ${rankColors[rank]}`;
+  document.getElementById('rank-badge').style.color = rankColors[rank] || '#ffd700';
+  document.getElementById('rank-badge').style.textShadow = `0 0 30px ${rankColors[rank] || '#ffd700'}`;
   document.getElementById('result-score').textContent = score.toLocaleString();
   document.getElementById('result-combo').textContent = maxCombo;
   document.getElementById('result-perfect').textContent = stats.perfect;
@@ -1640,12 +1704,17 @@ function endGame() {
   document.getElementById('result-miss').textContent = stats.miss;
 
   // Show next-level or game-clear button only on clear (no lives lost to 0)
-  const cleared = lives > 0;
+  const cleared = lives > 0 || isBaby;
   const nextIdx = LEVEL_ORDER.indexOf(currentLevel) + 1;
-  const hasNext = nextIdx < LEVEL_ORDER.length;
+  const hasNext = !isBaby && nextIdx < LEVEL_ORDER.length;
 
   document.getElementById('next-btn').classList.toggle('hidden', !(cleared && hasNext));
   document.getElementById('clear-btn').classList.toggle('hidden', !(cleared && !hasNext));
+
+  const clearLabel = document.querySelector('#clear-btn .btn-primary-inner');
+  if (clearLabel) clearLabel.textContent = isBaby ? '🎉 できたね！' : '🎉 ゲームクリア!';
+  const retryLabel = document.querySelector('#retry-btn .btn-primary-inner');
+  if (retryLabel) retryLabel.textContent = isBaby ? 'もう１かい' : 'RETRY';
 
   document.getElementById('result-screen').classList.remove('hidden');
 }
@@ -1688,14 +1757,52 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// Canvas direct touch / click support (direct note tapping anywhere on lane for toddlers)
+function handleCanvasInput(clientX, clientY) {
+  if (state !== 'playing') return;
+  initAudio();
+  const rect = gameCanvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const laneW = rect.width / LANE_COUNT;
+  const lane = Math.min(LANE_COUNT - 1, Math.max(0, Math.floor(x / laneW)));
+  onTap(lane);
+}
+
+gameCanvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    handleCanvasInput(t.clientX, t.clientY);
+  }
+}, { passive: false });
+
+gameCanvas.addEventListener('mousedown', e => {
+  if (state !== 'playing') return;
+  handleCanvasInput(e.clientX, e.clientY);
+});
+
+function updateStartUI() {
+  const descEl = document.getElementById('start-desc');
+  const startBtnInner = document.querySelector('#start-btn .btn-primary-inner');
+  if (diff === 'age3') {
+    if (descEl) descEl.innerHTML = 'マークが きたら ポン♪<br>ゆっくり おちてくるよ！';
+    if (startBtnInner) startBtnInner.textContent = 'あそぶ！';
+  } else {
+    if (descEl) descEl.innerHTML = 'ノートが判定ラインに来たらタップ<br>タイミングよくヒットしてスコアを稼げ';
+    if (startBtnInner) startBtnInner.textContent = 'JACK IN';
+  }
+}
+
 // Difficulty buttons
 document.querySelectorAll('.diff-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     diff = btn.dataset.diff;
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    updateStartUI();
   });
 });
+updateStartUI();
 
 // Start
 document.getElementById('start-btn').addEventListener('click', () => {
@@ -1722,6 +1829,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   document.getElementById('result-screen').classList.add('hidden');
   document.getElementById('start-screen').classList.remove('hidden');
   state = 'start';
+  updateStartUI();
   startDemo();
 });
 
@@ -1736,6 +1844,7 @@ document.getElementById('menu-btn').addEventListener('click', () => {
   document.getElementById('result-screen').classList.add('hidden');
   document.getElementById('start-screen').classList.remove('hidden');
   state = 'start';
+  updateStartUI();
   startDemo();
 });
 
