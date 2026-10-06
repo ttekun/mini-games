@@ -646,6 +646,26 @@ const SCORE_TABLE = { perfect: 300, good: 100, miss: 0 };
 const COMBO_BONUS = 10;
 const MAX_LIVES = 3;
 
+// Dinosaur image assets preloaded for iPad and cross-device compatibility
+const DINO_ASSETS = [
+  'assets/dino/trex.png',
+  'assets/dino/sauropod.png',
+  'assets/dino/baby-dino.png',
+  'assets/dino/egg.png',
+  'assets/dino/footprint.png',
+  'assets/dino/bone.png',
+  'assets/dino/dragon.png',
+  'assets/dino/lizard.png',
+  'assets/dino/croc.png',
+  'assets/dino/volcano.png',
+];
+
+const dinoImages = DINO_ASSETS.map(src => {
+  const img = new Image();
+  img.src = src;
+  return img;
+});
+
 renderLives();
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -1133,15 +1153,7 @@ function spawnNote() {
   const laneCount = isBaby ? 1 : (Math.random() < d.density ? (Math.random() < 0.15 ? 2 : 1) : 1);
   const lanes = shuffleArr([0, 1, 2, 3]).slice(0, laneCount);
   lanes.forEach(lane => {
-    let emoji;
-    if (isBaby) {
-      const babyEmojis = ['🐶', '🐱', '🐰', '🐼', '🐻', '🚗', '🚀', '⭐', '🍎', '🍓', '🐣', '🌸'];
-      emoji = babyEmojis[Math.floor(Math.random() * babyEmojis.length)];
-    } else {
-      // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
-      const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
-      emoji = emojis[Math.floor(Math.random() * emojis.length)];
-    }
+    const dinoImg = dinoImages[Math.floor(Math.random() * dinoImages.length)];
     
     notes.push({
       lane,
@@ -1151,7 +1163,7 @@ function spawnNote() {
       missed: false,
       hitEffect: 0,
       color: LANE_COLORS[lane],
-      dino: emoji,
+      dinoImg: dinoImg,
     });
   });
 }
@@ -1206,16 +1218,8 @@ function demoLoop(ts) {
   if (demoTimer >= demoNextNote) {
     const lane = Math.floor(Math.random() * LANE_COUNT);
     const isBaby = (diff === 'age3');
-    let emoji;
-    if (isBaby) {
-      const babyEmojis = ['🐶', '🐱', '🐰', '🐼', '🐻', '🚗', '🚀', '⭐', '🍎', '🍓', '🐣', '🌸'];
-      emoji = babyEmojis[Math.floor(Math.random() * babyEmojis.length)];
-    } else {
-      // Assign a fixed emoji for sho1 difficulty (dinosaurs + insects)
-      const emojis = ['🦕', '🦖', '🦎', '🐊', '🐉', '🦋', '🐝', '🐞', '🐜', '🪲'];
-      emoji = emojis[Math.floor(Math.random() * emojis.length)];
-    }
     const currentSpeed = isBaby ? DIFFICULTY.age3.speed : DEMO_SPEED;
+    const dinoImg = dinoImages[Math.floor(Math.random() * dinoImages.length)];
     
     demoNotes.push({
       lane,
@@ -1225,7 +1229,7 @@ function demoLoop(ts) {
       missed: false,
       hitEffect: 0,
       color: LANE_COLORS[lane],
-      dino: emoji,
+      dinoImg: dinoImg,
     });
     demoNextNote += isBaby ? DEMO_BEAT * 1.5 : DEMO_BEAT;
   }
@@ -1321,9 +1325,9 @@ function drawDemo() {
       gc.shadowColor = n.color;
       gc.shadowBlur = 22;
       
-      // Use dinosaur or cute emoji for age3 and sho1 difficulty in demo mode
+      // Use dinosaur image for age3 and sho1 difficulty in demo mode
       if (diff === 'age3' || diff === 'sho1') {
-        drawDinoNote(gc, cx, cy, diff === 'age3' ? NOTE_RADIUS * 1.3 : NOTE_RADIUS, n.color, n.dino);
+        drawDinoNode(gc, cx, cy, diff === 'age3' ? NOTE_RADIUS * 1.3 : NOTE_RADIUS, n.color, n.dinoImg);
       } else {
         const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
                                             NOTE_RADIUS * 0.1, cx, cy, NOTE_RADIUS);
@@ -1422,16 +1426,26 @@ function drawNote(ctx, cx, cy, r) {
   ctx.closePath();
 }
 
-// Cute dinosaur emoji note helper
-function drawDinoNote(ctx, cx, cy, r, color, dinoEmoji) {
-  ctx.font = `${r * 3.2}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  
+// Cute dinosaur image note helper (iPad & cross-device compatible)
+function drawDinoNode(ctx, cx, cy, r, color, dinoImg) {
+  // Glow background circle - crisp and vibrant on iPad Safari
+  ctx.save();
   ctx.shadowColor = color;
-  ctx.shadowBlur = 15;
-  ctx.fillText(dinoEmoji, cx, cy);
-  ctx.shadowBlur = 0;
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.restore();
+
+  // Draw crisp dinosaur image without canvas text/shadow bugs
+  if (dinoImg && dinoImg.complete && dinoImg.naturalWidth > 0) {
+    const size = r * 1.5;
+    ctx.drawImage(dinoImg, cx - size / 2, cy - size / 2, size, size);
+  }
 }
 
 function draw() {
@@ -1508,13 +1522,13 @@ function draw() {
       gc.shadowBlur = 0;
 
     } else {
-      // Normal note — glossy circle or emoji for age3 and sho1
+      // Normal note — glossy circle or dinosaur image for age3 and sho1
       gc.shadowColor = n.color;
       gc.shadowBlur = 22;
 
-      // Use cute / dinosaur emoji for age3 and sho1
+      // Use cute dinosaur image for age3 and sho1
       if (activeDiff === 'age3' || activeDiff === 'sho1' || diff === 'age3' || diff === 'sho1') {
-        drawDinoNote(gc, cx, cy, (activeDiff === 'age3' || diff === 'age3') ? NOTE_RADIUS * 1.3 : NOTE_RADIUS, n.color, n.dino);
+        drawDinoNode(gc, cx, cy, (activeDiff === 'age3' || diff === 'age3') ? NOTE_RADIUS * 1.3 : NOTE_RADIUS, n.color, n.dinoImg);
       } else {
         // Main fill
         const rg = gc.createRadialGradient(cx - NOTE_RADIUS * 0.35, cy - NOTE_RADIUS * 0.35,
